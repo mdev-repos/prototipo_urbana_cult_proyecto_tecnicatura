@@ -1,0 +1,9 @@
+[
+  { "id": "u-cliente", "nombre": "Lucía Fernández", "email": "lucia@demo.urbana", "rol": "cliente" },
+  { "id": "u-vendedor", "nombre": "Nahuel Ortiz", "email": "nahuel@demo.urbana", "rol": "vendedor", "centroId": "c-sur" },
+  { "id": "u-centro", "nombre": "María Gómez", "email": "maria@demo.urbana", "rol": "centro", "centroId": "c-sur" },
+  { "id": "u-artista", "nombre": "Marga Ibarra", "email": "marga@demo.urbana", "rol": "artista", "artistaId": "a-marga" },
+  { "id": "u-admin", "nombre": "Tomás Beltrán", "email": "tomas@demo.urbana", "rol": "admin" },
+  { "id": "u-admgral", "nombre": "Carolina Ruiz", "email": "carolina@demo.urbana", "rol": "coordinacion", "area": "administracion" },
+  { "id": "u-cobros", "nombre": "Diego Salas", "email": "diego@demo.urbana", "rol": "coordinacion", "area": "cobros" }
+]

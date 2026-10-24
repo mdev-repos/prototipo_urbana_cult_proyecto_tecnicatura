@@ -1,0 +1,9 @@
+{
+  "comisionUrbanaPct": 10,
+  "aporteFondoPct": 2,
+  "fondoInicialPesos": 250000,
+  "plazoLiquidacionDias": 2,
+  "plazoRemesaDias": 1,
+  "vencimientoReservaMin": 10,
+  "fechaInicialDemo": "2026-11-02"
+}
