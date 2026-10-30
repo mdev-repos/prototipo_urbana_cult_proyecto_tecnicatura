@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
+import { t } from '../../i18n'
 
 type Props = {
   titulo: string
@@ -40,8 +41,7 @@ export function Modal({ titulo, onClose, children }: Props) {
         <header className="modal__head">
           <h2>{titulo}</h2>
           <button type="button" className="btn btn--ghost" onClick={onClose}>
-            Cerrar
-          </button>
+            {t('Cerrar')}</button>
         </header>
         <div className="modal__body">{children}</div>
       </div>

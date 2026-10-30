@@ -2,6 +2,7 @@ import { formatearCentavos, formatearDiaCorto } from '../format'
 import { entradasNetas, netoVenta, sumarDias } from '../domain/ventas'
 import { parametros, useMvp } from '../state'
 import type { Beneficiario, EstadoAsiento } from '../types'
+import { t } from '../../i18n'
 
 type Props = {
   beneficiario: Exclude<Beneficiario, 'urbana'>
@@ -48,7 +49,7 @@ export function EstadoCuenta({ beneficiario, beneficiarioId }: Props) {
     .sort((a, b) => a.evento.fecha.localeCompare(b.evento.fecha))
 
   if (filas.length === 0) {
-    return <p className="muted">Todavía no hay ventas asentadas para mostrar.</p>
+    return <p className="muted">{t('Todavía no hay ventas asentadas para mostrar.')}</p>
   }
 
   const totalParte = filas.reduce((s, f) => s + f.parte, 0)
@@ -56,19 +57,17 @@ export function EstadoCuenta({ beneficiario, beneficiarioId }: Props) {
   return (
     <div className="account">
       <p className="muted">
-        Tu parte acumulada: <strong>{formatearCentavos(totalParte)}</strong>. Todo se mantiene
-        retenido hasta la liquidación, D+{parametros.plazoLiquidacionDias} después de cada evento.
-      </p>
+        {t('Tu parte acumulada:')}{" "}<strong>{formatearCentavos(totalParte)}</strong>{t('. Todo se mantiene retenido hasta la liquidación, D+')}{parametros.plazoLiquidacionDias} {t('después de cada evento.')}</p>
       <div className="table-wrap">
         <table className="table">
           <thead>
             <tr>
-              <th>Evento</th>
-              <th className="num">Entradas</th>
-              <th className="num">Recaudado</th>
-              <th className="num">Tu parte</th>
-              <th>Estado</th>
-              <th>Liquida</th>
+              <th>{t('Evento')}</th>
+              <th className="num">{t('Entradas')}</th>
+              <th className="num">{t('Recaudado')}</th>
+              <th className="num">{t('Tu parte')}</th>
+              <th>{t('Estado')}</th>
+              <th>{t('Liquida')}</th>
             </tr>
           </thead>
           <tbody>
@@ -76,15 +75,15 @@ export function EstadoCuenta({ beneficiario, beneficiarioId }: Props) {
               <tr key={f.evento.id}>
                 <td>
                   {f.evento.titulo}
-                  {f.evento.baja ? <span className="muted"> (baja)</span> : null}
+                  {f.evento.baja ? <span className="muted"> {t('(baja)')}</span> : null}
                 </td>
                 <td className="num">{f.entradas}</td>
                 <td className="num">{formatearCentavos(f.total)}</td>
                 <td className="num">{formatearCentavos(f.parte)}</td>
                 <td>
                   {ESTADOS.filter((e) => f.porEstado[e] > 0).map((e) => (
-                    <span key={e} className={`status status--${e}`} title={ETIQUETA[e]}>
-                      {ETIQUETA[e]} {formatearCentavos(f.porEstado[e])}
+                    <span key={e} className={`status status--${e}`} title={t(ETIQUETA[e])}>
+                      {t(ETIQUETA[e])} {formatearCentavos(f.porEstado[e])}
                     </span>
                   ))}
                 </td>

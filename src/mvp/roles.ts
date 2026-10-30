@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 import type { Rol, Usuario } from './types'
 
 type MetaRol = {
@@ -43,8 +44,8 @@ export const metaRol: Record<Rol, MetaRol> = {
 export function etiquetaUsuario(usuario: Usuario): string {
   if (usuario.rol === 'coordinacion') {
     return usuario.area === 'administracion'
-      ? 'Coordinación · Administración General'
-      : 'Coordinación · Boletería y Cobros'
+      ? t('Coordinación · Administración General')
+      : t('Coordinación · Boletería y Cobros')
   }
-  return metaRol[usuario.rol].etiqueta
+  return t(metaRol[usuario.rol].etiqueta)
 }

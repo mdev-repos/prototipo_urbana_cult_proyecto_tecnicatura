@@ -4,6 +4,7 @@ import { LogoMark } from '../../components/Logo'
 import { EventCard } from '../components/EventCard'
 import { etiquetaUsuario, metaRol } from '../roles'
 import { artistas, useMvp } from '../state'
+import { t } from '../../i18n'
 
 /** Contraseña de todos los usuarios de prueba. */
 const CLAVE_DEMO = 'demo'
@@ -25,7 +26,7 @@ function AccesoCard() {
     const usuario = usuarios.find((u) => u.id === usuarioId)
     if (!usuario) return
     if (usuario.activo === false) {
-      setError('Esta cuenta está deshabilitada.')
+      setError(t('Esta cuenta está deshabilitada.', 'Esta conta está desabilitada.'))
       return
     }
     setError('')
@@ -37,7 +38,7 @@ function AccesoCard() {
     e.preventDefault()
     const usuario = usuarios.find((u) => u.email === email.trim().toLowerCase())
     if (!usuario || clave !== CLAVE_DEMO) {
-      setError('Usuario o contraseña incorrectos.')
+      setError(t('Usuario o contraseña incorrectos.', 'Usuário ou senha incorretos.'))
       return
     }
     entrar(usuario.id)
@@ -45,27 +46,27 @@ function AccesoCard() {
 
   return (
     <div className="access" id="acceso">
-      <h2 className="access__title">Ingresar</h2>
+      <h2 className="access__title">{t('Ingresar', 'Entrar')}</h2>
 
       <form onSubmit={enviar} className="form" noValidate>
         <label className="field">
-          <span>Email</span>
+          <span>{t('Email')}</span>
           <input
             type="email"
             autoComplete="username"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="lucia@demo.urbana"
+            placeholder={t('lucia@demo.urbana')}
           />
         </label>
         <label className="field">
-          <span>Contraseña</span>
+          <span>{t('Contraseña', 'Senha')}</span>
           <input
             type="password"
             autoComplete="current-password"
             value={clave}
             onChange={(e) => setClave(e.target.value)}
-            placeholder="demo"
+            placeholder={t('demo')}
           />
         </label>
         {error ? (
@@ -74,34 +75,37 @@ function AccesoCard() {
           </p>
         ) : null}
         <button type="submit" className="btn btn--primary">
-          Ingresar
+          {t('Ingresar', 'Entrar')}
         </button>
       </form>
 
       <div className="access__divider">
-        <span>o ingresá como</span>
+        <span>{t('o ingresá como', 'ou entre como')}</span>
       </div>
 
       <div className="form">
         <label className="field">
-          <span className="sr-only">Perfil de prueba</span>
+          <span className="sr-only">{t('Perfil de prueba', 'Perfil de teste')}</span>
           <select value={comoId} onChange={(e) => setComoId(e.target.value)}>
             {usuarios.map((u) => (
               <option key={u.id} value={u.id}>
-                {etiquetaUsuario(u)} · {u.nombre}
-                {u.activo === false ? ' (deshabilitado)' : ''}
+                {etiquetaUsuario(u)} {t('·')}{" "}{u.nombre}
+                {u.activo === false ? ` (${t('deshabilitado')})` : ''}
               </option>
             ))}
           </select>
         </label>
         <button type="button" className="btn" onClick={() => entrar(comoId)}>
-          Entrar con este perfil
+          {t('Entrar con este perfil', 'Entrar com este perfil')}
         </button>
       </div>
 
       <p className="access__hint">
-        Usuarios de prueba. La contraseña de todos es <code>{CLAVE_DEMO}</code>.
-      </p>
+        {t(
+          'Usuarios de prueba. La contraseña de todos es',
+          'Usuários de teste. A senha de todos é',
+        )}{' '}
+        <code>{CLAVE_DEMO}</code>{t('.')}</p>
     </div>
   )
 }
@@ -137,18 +141,25 @@ export function Landing() {
         <div className="hero__inner">
           <div className="hero__text">
             <LogoMark className="hero__mark" />
-            <p className="eyebrow">Red de centros culturales</p>
-            <h1>Cultura en red, cobrada y repartida sin demoras.</h1>
+            <p className="eyebrow">{t('Red de centros culturales', 'Rede de centros culturais')}</p>
+            <h1>
+              {t(
+                'Cultura en red, cobrada y repartida sin demoras.',
+                'Cultura em rede, cobrada e dividida sem atrasos.',
+              )}
+            </h1>
             <p className="lead">
-              Una cartelera única, entradas sin sobreventa y el reparto de cada cobro entre el
-              centro, el artista y la red, asentado en el momento del pago.
+              {t(
+                'Una cartelera única, entradas sin sobreventa y el reparto de cada cobro entre el centro, el artista y la red, asentado en el momento del pago.',
+                'Uma programação única, ingressos sem venda em excesso e a divisão de cada pagamento entre o centro, o artista e a rede, registrada no momento do pagamento.',
+              )}
             </p>
             <div className="hero__actions">
               <button type="button" className="btn btn--primary" onClick={() => irA('cartelera')}>
-                Ver cartelera
+                {t('Ver cartelera', 'Ver programação')}
               </button>
               <button type="button" className="btn" onClick={() => irA('acceso')}>
-                Ingresar
+                {t('Ingresar', 'Entrar')}
               </button>
             </div>
           </div>
@@ -158,13 +169,20 @@ export function Landing() {
 
       <section id="cartelera" className="page cartelera">
         <div className="cartelera__head">
-          <h2>Cartelera</h2>
+          <h2>{t('Cartelera', 'Programação')}</h2>
           <p className="muted">
-            Orden de portada: primero los destacados por la Asamblea, luego por fecha.
+            {t(
+              'Orden de portada: primero los destacados por la Asamblea, luego por fecha.',
+              'Ordem da vitrine: primeiro os destaques da Assembleia, depois por data.',
+            )}
           </p>
         </div>
 
-        <div className="chips" role="group" aria-label="Filtrar por categoría">
+        <div
+          className="chips"
+          role="group"
+          aria-label={t('Filtrar por categoría', 'Filtrar por categoria')}
+        >
           {categorias.map((c) => (
             <button
               key={c}
@@ -173,7 +191,7 @@ export function Landing() {
               onClick={() => setCategoria(c)}
               aria-pressed={c === categoria}
             >
-              {c}
+              {t(c)}
             </button>
           ))}
         </div>
@@ -186,13 +204,15 @@ export function Landing() {
               centro={estado.centros.find((c) => c.id === evento.centroId)?.nombre ?? ''}
               artista={artistas.find((a) => a.id === evento.artistaId)?.nombre ?? ''}
               accion={{
-                etiqueta: 'Ingresá para comprar',
+                etiqueta: t('Ingresá para comprar', 'Entre para comprar'),
                 onClick: () => irA('acceso'),
               }}
             />
           ))}
           {eventos.length === 0 ? (
-            <p className="muted">No hay eventos para esta categoría.</p>
+            <p className="muted">
+              {t('No hay eventos para esta categoría.', 'Não há eventos nesta categoria.')}
+            </p>
           ) : null}
         </div>
       </section>

@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 import {
   createContext,
   useContext,
@@ -10,15 +11,26 @@ import {
 import artistasSeed from './data/artistas.json'
 import centrosSeed from './data/centros.json'
 import eventosSeed from './data/eventos.json'
+import salasSeed from './data/salas.json'
 import parametrosSeed from './data/parametros.json'
 import usuariosSeed from './data/usuarios.json'
+import { DIA_BASE, correrFecha, desfaseHoy } from './domain/fechas'
+import { HORAS_SALA, reservaDeFranja } from './domain/salas'
 import { ventasIniciales } from './domain/semilla'
 import { cierreDelDia, totalesDeCaja, ventasDeCaja } from './domain/caja'
 import { devolverEntradas } from './domain/devoluciones'
 import { calcularLiquidacion, fechaLiquidacion } from './domain/liquidacion'
 import { diasConciliables, duplicadoPasarela, registradoDelDia } from './domain/pasarela'
 import { centroConRemesaVencida, proponerRemesa, referenciaRemesa } from './domain/remesas'
-import { disponibles, entradasNetas, netoVenta, registrarVenta, sumarDias } from './domain/ventas'
+import {
+  bloqueLibre,
+  disponibles,
+  entradasNetas,
+  netoVenta,
+  registrarVenta,
+  sumarDias,
+  tamanoBloque,
+} from './domain/ventas'
 import { formatearCentavos, formatearDiaCorto } from './format'
 import type {
   Artista,
@@ -35,14 +47,17 @@ import type {
   Entrada,
   Evento,
   Parametros,
+  PendienteSync,
   Remesa,
   Reserva,
+  ReservaSala,
+  Sala,
   Usuario,
   Venta,
 } from './types'
 
 /** Se cambia al modificar la forma del estado guardado; así no se leen datos viejos. */
-const VERSION = 7
+const VERSION = 10
 const STORAGE_KEY = 'uc-mvp-estado'
 
 export const parametros = parametrosSeed as Parametros
@@ -77,6 +92,18 @@ type Estado = {
   avisos: Aviso[]
   /** Cierres de caja diarios de los vendedores. */
   cierres: CierreCaja[]
+  /** Salas de ensayo de los espacios. */
+  salas: Sala[]
+  /** Franjas de sala ya confirmadas. */
+  reservasSala: ReservaSala[]
+  /** Demo: la boletería está sin internet y solo vende con el bloque numerado de contingencia. */
+  corteInternet: boolean
+  /** Ventas hechas sin conexión que todavía no se sincronizaron. */
+  pendientes: PendienteSync[]
+  /** Cuántas ventas y entradas se sincronizaron en la última reconexión. */
+  ultimaSync: { ventas: number; entradas: number } | null
+  /** Días que se corrieron las fechas de referencia para que la demo arranque "hoy". */
+  desfase: number
   /** Contador para generar identificadores. */
   seq: number
 }
@@ -99,6 +126,12 @@ type Accion =
       ahora: number
     }
   | { tipo: 'cerrar-caja'; usuarioId: string; declaradoCentavos: number }
+  | { tipo: 'usar-entrada'; entradaId: string }
+  | { tipo: 'reservar-sala'; usuarioId: string; salaId: string; fecha: string; hora: number }
+  | { tipo: 'cancelar-reserva-sala'; usuarioId: string; reservaId: string }
+  | { tipo: 'corte-internet'; usuarioId: string; activo: boolean }
+  | { tipo: 'vender-sin-conexion'; eventoId: string; usuarioId: string; cantidad: number }
+  | { tipo: 'admin-difusion-centro'; adminId: string; centroId: string; soloDifusion: boolean }
   | { tipo: 'guardar-evento'; usuarioId: string; evento: DatosEvento }
   | { tipo: 'baja-evento'; usuarioId: string; eventoId: string }
   | { tipo: 'generar-remesa'; usuarioId: string; eventoId: string }
@@ -158,8 +191,14 @@ function aplicarBloqueos(estado: Estado): Estado {
     if (nuevo === c.estado) return c
     const texto =
       nuevo === 'bloqueado'
-        ? `${c.nombre} quedó bloqueado${vencida ? ' por remesas vencidas' : ' por decisión de la administración'}: no puede publicar eventos ni vender en efectivo hasta regularizarse.`
-        : `${c.nombre} volvió a estar habilitado.`
+        ? t(
+            '{centro} quedó bloqueado {motivo}: no puede publicar eventos ni vender en efectivo hasta regularizarse.',
+            {
+              centro: c.nombre,
+              motivo: vencida ? t('por remesas vencidas') : t('por decisión de la administración'),
+            },
+          )
+        : t('{centro} volvió a estar habilitado.', { centro: c.nombre })
     for (const para of ['admin', 'coordinacion', 'centro'] as const) {
       seq += 1
       avisos.push({ id: `n-${seq}`, fecha: estado.hoy, para, centroId: c.id, texto })
@@ -189,12 +228,49 @@ function liberarAsientos(estado: Estado): Estado {
   }
 }
 
+/** Franjas ya ocupadas al empezar la demo, para mostrar una grilla con movimiento. */
+function reservasSalaIniciales(desfase: number): ReservaSala[] {
+  const datos: [string, number, number][] = [
+    ['s-sur-a', 1, 18],
+    ['s-sur-a', 1, 19],
+    ['s-sur-b', 2, 16],
+    ['s-subsuelo', 1, 20],
+    ['s-subsuelo', 2, 20],
+    ['s-subsuelo', 2, 21],
+    ['s-patio', 3, 17],
+    ['s-calesita', 1, 15],
+  ]
+  return datos.map(([salaId, dias, hora], i) => {
+    const sala = (salasSeed as Sala[]).find((x) => x.id === salaId)!
+    return {
+      id: `rs-s${i + 1}`,
+      salaId,
+      usuarioId: 'externo',
+      fecha: correrFecha(sumarDias(DIA_BASE, dias), desfase),
+      hora,
+      totalCentavos: sala.precioHora * 100,
+    }
+  })
+}
+
 function estadoInicial(): Estado {
-  const eventos = eventosSeed as Evento[]
-  const semilla = ventasIniciales(eventos, parametros.comisionUrbanaPct)
+  // Las fechas se escribieron para un día de referencia y se corren al día real, así la
+  // cartelera siempre tiene eventos pasados, de hoy y futuros al abrir o reiniciar la demo.
+  const desfase = desfaseHoy()
+  const eventos = (eventosSeed as Evento[]).map((e) => ({
+    ...e,
+    fecha: correrFecha(e.fecha, desfase),
+  }))
+  const semilla = ventasIniciales(eventos, parametros.comisionUrbanaPct, desfase)
   return {
     sesion: null,
-    hoy: parametros.fechaInicialDemo,
+    hoy: correrFecha(parametros.fechaInicialDemo, desfase),
+    desfase,
+    salas: salasSeed as Sala[],
+    reservasSala: reservasSalaIniciales(desfase),
+    corteInternet: false,
+    pendientes: [],
+    ultimaSync: null,
     centros: centrosSeed as Centro[],
     eventos,
     reservas: [],
@@ -203,7 +279,10 @@ function estadoInicial(): Estado {
     asientos: semilla.asientos,
     usuarios: usuariosIniciales.map((u) => ({ ...u, activo: true })),
     incidencias: [],
-    conciliaciones: diasConciliables('2026-10-31').map((fecha) => {
+    conciliaciones: diasConciliables(
+      correrFecha('2026-10-31', desfase),
+      correrFecha('2026-10-27', desfase),
+    ).map((fecha) => {
       const registrado = registradoDelDia(semilla.ventas, fecha)
       return { fecha, registradoCentavos: registrado, informadoCentavos: registrado }
     }),
@@ -227,6 +306,127 @@ function reductorBase(estado: Estado, accion: Accion): Estado {
     }
     case 'logout':
       return { ...estado, sesion: null }
+    case 'corte-internet': {
+      const quien = estado.usuarios.find((u) => u.id === accion.usuarioId)
+      if (quien?.rol !== 'vendedor') return estado
+      if (accion.activo) return { ...estado, corteInternet: true, ultimaSync: null }
+      // Al reconectar, cada venta pendiente se asienta con la misma lógica que una venta normal.
+      let seq = estado.seq
+      const ventas = [...estado.ventas]
+      const entradas = [...estado.entradas]
+      const asientos = [...estado.asientos]
+      for (const p of estado.pendientes) {
+        const evento = estado.eventos.find((e) => e.id === p.eventoId)
+        if (!evento) continue
+        const r = registrarVenta({
+          seq,
+          evento,
+          comisionPct: parametros.comisionUrbanaPct,
+          compradorId: null,
+          vendedorId: p.vendedorId,
+          canal: 'boleteria',
+          medioPago: 'efectivo',
+          cantidad: p.cantidad,
+          fecha: p.fecha,
+        })
+        seq = r.seq
+        ventas.push({ ...r.venta, contingencia: true })
+        // Las entradas conservan los números impresos del bloque.
+        entradas.push(...r.entradas.map((e, i) => ({ ...e, codigo: p.numeros[i] ?? e.codigo })))
+        asientos.push(...r.asientos)
+      }
+      const cantidadEntradas = estado.pendientes.reduce((s, p) => s + p.cantidad, 0)
+      return {
+        ...estado,
+        seq,
+        ventas,
+        entradas,
+        asientos,
+        corteInternet: false,
+        pendientes: [],
+        ultimaSync: { ventas: estado.pendientes.length, entradas: cantidadEntradas },
+      }
+    }
+
+    case 'vender-sin-conexion': {
+      const evento = estado.eventos.find((e) => e.id === accion.eventoId)
+      const vendedor = estado.usuarios.find((u) => u.id === accion.usuarioId)
+      if (
+        !estado.corteInternet ||
+        !evento ||
+        evento.baja ||
+        vendedor?.rol !== 'vendedor' ||
+        vendedor.centroId !== evento.centroId ||
+        cierreDelDia(estado.cierres, vendedor.id, estado.hoy)
+      ) {
+        return estado
+      }
+      const centro = estado.centros.find((c) => c.id === evento.centroId)
+      if (centro?.estado === 'bloqueado' || centro?.soloDifusion) return estado
+      const enPendientes = estado.pendientes
+        .filter((p) => p.eventoId === evento.id)
+        .reduce((s, p) => s + p.cantidad, 0)
+      const libres = bloqueLibre(evento, estado.ventas) - enPendientes
+      if (accion.cantidad < 1 || accion.cantidad > libres) return estado
+      const primero = tamanoBloque(evento) - libres + 1
+      const numeros = Array.from(
+        { length: accion.cantidad },
+        (_, i) => `UC-C${evento.id.slice(2, 6).toUpperCase()}-${String(primero + i).padStart(2, '0')}`,
+      )
+      return {
+        ...estado,
+        seq: estado.seq + 1,
+        pendientes: [
+          ...estado.pendientes,
+          {
+            id: `p-${estado.seq + 1}`,
+            eventoId: evento.id,
+            vendedorId: vendedor.id,
+            cantidad: accion.cantidad,
+            fecha: estado.hoy,
+            numeros,
+          },
+        ],
+      }
+    }
+
+    case 'reservar-sala': {
+      const quien = estado.usuarios.find((u) => u.id === accion.usuarioId)
+      const sala = estado.salas.find((x) => x.id === accion.salaId)
+      if (!quien || (quien.rol !== 'cliente' && quien.rol !== 'artista') || !sala) return estado
+      if (accion.fecha < estado.hoy || !HORAS_SALA.includes(accion.hora)) return estado
+      // Una franja solo se puede confirmar una vez: ahí se evita la doble reserva.
+      if (reservaDeFranja(estado.reservasSala, sala.id, accion.fecha, accion.hora)) return estado
+      return {
+        ...estado,
+        seq: estado.seq + 1,
+        reservasSala: [
+          ...estado.reservasSala,
+          {
+            id: `rs-${estado.seq + 1}`,
+            salaId: sala.id,
+            usuarioId: quien.id,
+            fecha: accion.fecha,
+            hora: accion.hora,
+            totalCentavos: sala.precioHora * 100,
+          },
+        ],
+      }
+    }
+
+    case 'cancelar-reserva-sala': {
+      const reserva = estado.reservasSala.find((r) => r.id === accion.reservaId)
+      if (!reserva || reserva.usuarioId !== accion.usuarioId || reserva.fecha < estado.hoy) return estado
+      return { ...estado, reservasSala: estado.reservasSala.filter((r) => r.id !== reserva.id) }
+    }
+
+    case 'usar-entrada':
+      return {
+        ...estado,
+        entradas: estado.entradas.map((e) =>
+          e.id === accion.entradaId && !e.ingreso && !e.anulada ? { ...e, ingreso: estado.hoy } : e,
+        ),
+      }
     case 'avanzar-dia':
       return liberarAsientos(aplicarBloqueos({ ...estado, hoy: sumarDias(estado.hoy, 1) }))
     case 'reiniciar':
@@ -320,6 +520,17 @@ function reductorBase(estado: Estado, accion: Accion): Estado {
       })
     }
 
+    case 'admin-difusion-centro': {
+      const admin = estado.usuarios.find((u) => u.id === accion.adminId)
+      if (admin?.rol !== 'admin') return estado
+      return {
+        ...estado,
+        centros: estado.centros.map((c) =>
+          c.id === accion.centroId ? { ...c, soloDifusion: accion.soloDifusion } : c,
+        ),
+      }
+    }
+
     case 'acceso-denegado':
       return estado
 
@@ -344,7 +555,10 @@ function reductorBase(estado: Estado, accion: Accion): Estado {
             fecha: estado.hoy,
             para: 'centro',
             centroId: remesa.centroId,
-            texto: `La remesa ${remesa.referencia} de ${centro?.nombre} fue conciliada y acreditada en el libro mayor.`,
+            texto: t('La remesa {ref} de {centro} fue conciliada y acreditada en el libro mayor.', {
+              ref: remesa.referencia,
+              centro: centro?.nombre ?? '',
+            }),
           },
         ],
       }
@@ -425,9 +639,9 @@ function reductorBase(estado: Estado, accion: Accion): Estado {
         const venta = ventas.find((v) => v.id === inc.ventaId)
         const cantidad = Math.min(inc.cantidad ?? 0, venta ? entradasNetas(venta) : 0)
         const monto = inc.ventaId ? devolver(inc.ventaId, cantidad) : 0
-        resolucion = `Devolución aprobada: se reembolsaron ${formatearCentavos(monto)}. ${accion.resolucion}`
+        resolucion = t('Devolución aprobada: se reembolsaron {monto}.', { monto: formatearCentavos(monto) }) + ` ${accion.resolucion}`
       } else if (inc.tipo === 'reclamo') {
-        resolucion = `Reclamo rechazado. ${accion.resolucion}`
+        resolucion = `${t('Reclamo rechazado.')} ${accion.resolucion}`
       } else if (inc.tipo === 'baja-evento') {
         let monto = 0
         let cantidadVentas = 0
@@ -438,7 +652,7 @@ function reductorBase(estado: Estado, accion: Accion): Estado {
             cantidadVentas += 1
           }
         }
-        resolucion = `Se revirtieron ${cantidadVentas} ventas por ${formatearCentavos(monto)}. ${accion.resolucion}`
+        resolucion = `${t('Se revirtieron {n} ventas por {monto}.', { n: cantidadVentas, monto: formatearCentavos(monto) })} ${accion.resolucion}`
       }
 
       return {
@@ -472,7 +686,7 @@ function reductorBase(estado: Estado, accion: Accion): Estado {
       const conciliaciones = [...estado.conciliaciones]
       for (const fecha of fechas) {
         const registrado = registradoDelDia(estado.ventas, fecha)
-        const duplicada = duplicadoPasarela(estado.ventas, fecha)
+        const duplicada = duplicadoPasarela(estado.ventas, fecha, estado.desfase)
         const informado = registrado + (duplicada ? duplicada.totalCentavos : 0)
         conciliaciones.push({ fecha, registradoCentavos: registrado, informadoCentavos: informado })
         if (duplicada) {
@@ -482,7 +696,14 @@ function reductorBase(estado: Estado, accion: Accion): Estado {
             fecha: estado.hoy,
             tipo: 'pasarela',
             estado: 'abierta',
-            descripcion: `En la conciliación del ${formatearDiaCorto(fecha)}, el informe de la pasarela trae ${formatearCentavos(duplicada.totalCentavos)} de más: confirmó dos veces el cobro de la venta ${duplicada.id}. El libro mayor la asentó una sola vez.`,
+            descripcion: t(
+              'En la conciliación del {dia}, el informe de la pasarela trae {monto} de más: confirmó dos veces el cobro de la venta {venta}. El libro mayor la asentó una sola vez.',
+              {
+                dia: formatearDiaCorto(fecha),
+                monto: formatearCentavos(duplicada.totalCentavos),
+                venta: duplicada.id,
+              },
+            ),
             ventaId: duplicada.id,
             eventoId: duplicada.eventoId,
             montoCentavos: duplicada.totalCentavos,
@@ -545,7 +766,7 @@ function reductorBase(estado: Estado, accion: Accion): Estado {
           tipo: 'aporte',
           eventoId: liq.eventoId,
           montoCentavos: c.aporteFondo,
-          texto: `Aporte de Urbana por “${evento?.titulo}”.`,
+          texto: t('Aporte de Urbana por “{evento}”.', { evento: evento?.titulo ?? '' }),
         })
       }
       if (c.coberturaFondo > 0) {
@@ -556,13 +777,18 @@ function reductorBase(estado: Estado, accion: Accion): Estado {
           tipo: 'cobertura',
           eventoId: liq.eventoId,
           montoCentavos: -c.coberturaFondo,
-          texto: `Cobertura al artista de “${evento?.titulo}” por remesas pendientes del centro.`,
+          texto: t('Cobertura al artista de “{evento}” por remesas pendientes del centro.', {
+            evento: evento?.titulo ?? '',
+          }),
         })
       }
       const avisos = [...estado.avisos]
       if (c.coberturaFondo > 0) {
         const centro = estado.centros.find((x) => x.id === evento?.centroId)
-        const texto = `Se cubrió al artista de “${evento?.titulo}” con el fondo de contingencia. ${centro?.nombre} debe recuperar ese monto regularizando sus remesas.`
+        const texto = t(
+          'Se cubrió al artista de “{evento}” con el fondo de contingencia. {centro} debe recuperar ese monto regularizando sus remesas.',
+          { evento: evento?.titulo ?? '', centro: centro?.nombre ?? '' },
+        )
         for (const para of ['admin', 'coordinacion', 'centro'] as const) {
           seq += 1
           avisos.push({
@@ -697,7 +923,17 @@ function reductorBase(estado: Estado, accion: Accion): Estado {
                 fecha: estado.hoy,
                 tipo: 'diferencia-caja',
                 estado: 'abierta',
-                descripcion: `${vendedor.nombre} cerró la caja de ${centroNombre} con ${dif < 0 ? 'un faltante' : 'un sobrante'} de ${formatearCentavos(Math.abs(dif))} (declaró ${formatearCentavos(cierre.efectivoDeclaradoCentavos)}, el sistema registró ${formatearCentavos(cierre.efectivoRegistradoCentavos)}).`,
+                descripcion: t(
+                  '{vendedor} cerró la caja de {centro} con {tipo} de {monto} (declaró {declarado}, el sistema registró {registrado}).',
+                  {
+                    vendedor: vendedor.nombre,
+                    centro: centroNombre ?? '',
+                    tipo: dif < 0 ? t('un faltante') : t('un sobrante'),
+                    monto: formatearCentavos(Math.abs(dif)),
+                    declarado: formatearCentavos(cierre.efectivoDeclaradoCentavos),
+                    registrado: formatearCentavos(cierre.efectivoRegistradoCentavos),
+                  },
+                ),
                 centroId: vendedor.centroId,
                 usuarioId: vendedor.id,
                 montoCentavos: dif,
@@ -871,37 +1107,71 @@ function reductorBase(estado: Estado, accion: Accion): Estado {
 function describir(antes: Estado, despues: Estado, accion: Accion): Auditoria['texto'] | null {
   switch (accion.tipo) {
     case 'login':
-      return 'Inició sesión.'
+      return t('Inició sesión.')
     case 'guardar-evento':
-      return `${accion.evento.id ? 'Modificó' : 'Publicó'} el evento “${accion.evento.titulo}”.`
+      return t(accion.evento.id ? 'Modificó el evento “{evento}”.' : 'Publicó el evento “{evento}”.', {
+        evento: accion.evento.titulo,
+      })
     case 'baja-evento':
-      return `Dio de baja el evento “${antes.eventos.find((e) => e.id === accion.eventoId)?.titulo}”.`
+      return t('Dio de baja el evento “{evento}”.', {
+        evento: antes.eventos.find((e) => e.id === accion.eventoId)?.titulo ?? '',
+      })
     case 'generar-remesa':
-      return `Generó la remesa ${despues.remesas[despues.remesas.length - 1]?.referencia}.`
+      return t('Generó la remesa {ref}.', {
+        ref: despues.remesas[despues.remesas.length - 1]?.referencia ?? '',
+      })
     case 'cerrar-caja':
-      return 'Cerró la caja del día.'
+      return t('Cerró la caja del día.')
+    case 'reservar-sala':
+      return t('Reservó una sala de ensayo.')
+    case 'cancelar-reserva-sala':
+      return t('Canceló la reserva de una sala de ensayo.')
+    case 'corte-internet':
+      return accion.activo
+        ? t('La boletería quedó sin conexión y vende con el bloque de contingencia.')
+        : t('Se recuperó la conexión de la boletería y se sincronizaron las ventas.')
     case 'admin-guardar-usuario':
-      return `${accion.datos.id ? 'Modificó' : 'Creó'} el usuario ${accion.datos.nombre.trim()} (${accion.datos.rol}).`
+      return t(accion.datos.id ? 'Modificó el usuario {nombre} ({rol}).' : 'Creó el usuario {nombre} ({rol}).', {
+        nombre: accion.datos.nombre.trim(),
+        rol: accion.datos.rol,
+      })
     case 'admin-estado-usuario':
-      return `${accion.activo ? 'Habilitó' : 'Deshabilitó'} al usuario ${antes.usuarios.find((u) => u.id === accion.usuarioId)?.nombre}.`
+      return t(accion.activo ? 'Habilitó al usuario {nombre}.' : 'Deshabilitó al usuario {nombre}.', {
+        nombre: antes.usuarios.find((u) => u.id === accion.usuarioId)?.nombre ?? '',
+      })
     case 'admin-guardar-centro':
-      return `${accion.datos.id ? 'Modificó' : 'Dio de alta'} el centro ${accion.datos.nombre.trim()}.`
+      return t(accion.datos.id ? 'Modificó el centro {nombre}.' : 'Dio de alta el centro {nombre}.', {
+        nombre: accion.datos.nombre.trim(),
+      })
     case 'admin-bloqueo-centro':
-      return `${accion.bloqueado ? 'Bloqueó' : 'Desbloqueó'} manualmente a ${antes.centros.find((c) => c.id === accion.centroId)?.nombre}.`
+      return t(accion.bloqueado ? 'Bloqueó manualmente a {nombre}.' : 'Desbloqueó manualmente a {nombre}.', {
+        nombre: antes.centros.find((c) => c.id === accion.centroId)?.nombre ?? '',
+      })
     case 'acceso-denegado':
       return accion.detalle
     case 'reclamar':
-      return 'Presentó un reclamo por una compra.'
+      return t('Presentó un reclamo por una compra.')
     case 'resolver-incidencia':
-      return `Resolvió una incidencia (${antes.incidencias.find((i) => i.id === accion.incidenciaId)?.tipo}).`
+      return t('Resolvió una incidencia ({tipo}).', {
+        tipo: antes.incidencias.find((i) => i.id === accion.incidenciaId)?.tipo ?? '',
+      })
     case 'conciliar-dias':
-      return `Concilió con la pasarela ${accion.fechas.length === 1 ? 'el día' : 'los días'} ${accion.fechas.join(', ')}.`
+      return t('Concilió con la pasarela {dias}: {fechas}.', {
+        dias: accion.fechas.length === 1 ? t('el día') : t('los días'),
+        fechas: accion.fechas.join(', '),
+      })
     case 'conciliar-remesa':
-      return `Concilió la remesa ${antes.remesas.find((r) => r.id === accion.remesaId)?.referencia}.`
+      return t('Concilió la remesa {ref}.', {
+        ref: antes.remesas.find((r) => r.id === accion.remesaId)?.referencia ?? '',
+      })
     case 'aprobar-liquidacion':
-      return `Aprobó la liquidación de “${antes.eventos.find((e) => e.id === accion.eventoId)?.titulo}”.`
+      return t('Aprobó la liquidación de “{evento}”.', {
+        evento: antes.eventos.find((e) => e.id === accion.eventoId)?.titulo ?? '',
+      })
     case 'ejecutar-liquidacion':
-      return `Ejecutó los pagos de “${antes.eventos.find((e) => e.id === accion.eventoId)?.titulo}”.`
+      return t('Ejecutó los pagos de “{evento}”.', {
+        evento: antes.eventos.find((e) => e.id === accion.eventoId)?.titulo ?? '',
+      })
     default:
       return null
   }
@@ -922,7 +1192,7 @@ function reductor(estado: Estado, accion: Accion): Estado {
   const esLogout = accion.tipo === 'logout' && estado.sesion !== null
   const cambio = nuevo !== estado || accion.tipo === 'acceso-denegado' || esLogout
   if (!cambio) return nuevo
-  const texto = esLogout ? 'Cerró sesión.' : describir(estado, nuevo, accion)
+  const texto = esLogout ? t('Cerró sesión.') : describir(estado, nuevo, accion)
   if (!texto) return nuevo
   const seq = nuevo.seq + 1
   const tipo: Auditoria['tipo'] =
@@ -946,7 +1216,10 @@ function leerGuardado(): Estado {
     const crudo = localStorage.getItem(STORAGE_KEY)
     if (crudo) {
       const guardado = JSON.parse(crudo) as { version: number; estado: Estado }
-      if (guardado.version === VERSION) return guardado.estado
+      // Si cambió el día real, las fechas guardadas quedaron viejas: se arranca de nuevo.
+      if (guardado.version === VERSION && guardado.estado.desfase === desfaseHoy()) {
+        return guardado.estado
+      }
     }
   } catch {
     // sin acceso o datos corruptos: se arranca de cero

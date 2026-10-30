@@ -10,6 +10,31 @@ export type Centro = {
   estado: 'habilitado' | 'bloqueado'
   /** Bloqueo decidido por el administrador de la plataforma, además del automático por remesas vencidas. */
   bloqueoManual?: boolean
+  /** Centro en la etapa de solo difusión: publica su cartelera pero todavía no vende por la plataforma. */
+  soloDifusion?: boolean
+}
+
+/** Sala de ensayo de un espacio, que se alquila por hora a bandas y artistas. */
+export type Sala = {
+  id: string
+  nombre: string
+  centroId: string
+  /** Precio por hora, en pesos. */
+  precioHora: number
+  descripcion: string
+}
+
+/** Franja de una hora de una sala, ya confirmada. Una franja solo puede tener una reserva. */
+export type ReservaSala = {
+  id: string
+  salaId: string
+  /** Quién la reservó; "externo" para las reservas que ya existían al empezar la demo. */
+  usuarioId: string
+  /** Día de la franja (YYYY-MM-DD). */
+  fecha: string
+  /** Hora de inicio, de 0 a 23. */
+  hora: number
+  totalCentavos: number
 }
 
 export type Artista = {
@@ -94,6 +119,20 @@ export type Venta = {
   devueltas?: number
   /** Dinero reembolsado por las devoluciones, en centavos. */
   reembolsadoCentavos?: number
+  /** Venta hecha sin conexión con el bloque numerado de contingencia y sincronizada después. */
+  contingencia?: boolean
+}
+
+/** Venta de boletería hecha sin internet, a la espera de sincronizarse al reconectar. */
+export type PendienteSync = {
+  id: string
+  eventoId: string
+  vendedorId: string
+  cantidad: number
+  /** Día en que se vendió (según el reloj de la demo). */
+  fecha: string
+  /** Números de entrada del bloque reservado de antemano. */
+  numeros: string[]
 }
 
 export type Entrada = {
@@ -104,6 +143,8 @@ export type Entrada = {
   codigo: string
   /** Una entrada devuelta queda anulada y deja de ser válida. */
   anulada?: boolean
+  /** Fecha del día en que se validó en la puerta; una entrada se usa una sola vez. */
+  ingreso?: string
 }
 
 /** Una línea del libro mayor: la parte de un beneficiario en una venta. */

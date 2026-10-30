@@ -4,11 +4,14 @@ import { HashRouter } from 'react-router-dom'
 import '@fontsource-variable/jetbrains-mono'
 import './index.css'
 import App from './App.tsx'
+import { LangProvider } from './i18n'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <HashRouter>
-      <App />
-    </HashRouter>
+    <LangProvider>
+      <HashRouter>
+        <App />
+      </HashRouter>
+    </LangProvider>
   </StrictMode>,
 )

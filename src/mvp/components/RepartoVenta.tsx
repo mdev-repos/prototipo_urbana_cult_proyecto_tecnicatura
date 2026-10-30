@@ -2,6 +2,7 @@ import { formatearCentavos, formatearDiaCorto } from '../format'
 import { netoVenta, sumarDias } from '../domain/ventas'
 import { artistas, parametros, useMvp } from '../state'
 import type { Beneficiario } from '../types'
+import { t } from '../../i18n'
 
 const ETIQUETA_ESTADO = {
   retenido: 'Retenido',
@@ -28,13 +29,12 @@ export function RepartoVenta({ ventaId }: { ventaId: string }) {
   return (
     <div className="split">
       <div className="split__head">
-        <p className="split__title">A dónde va el pago ({formatearCentavos(netoVenta(venta))})</p>
+        <p className="split__title">{t('A dónde va el pago (')}{formatearCentavos(netoVenta(venta))}{t(')')}</p>
         <span
           className="split__tag"
-          title="El cliente no ve esta división: se muestra para ilustrar el asiento"
+          title={t('El cliente no ve esta división: se muestra para ilustrar el asiento')}
         >
-          Vista de demo
-        </span>
+          {t('Vista de demo')}</span>
       </div>
       <ul className="split__list">
         {orden.map((b) => {
@@ -43,22 +43,19 @@ export function RepartoVenta({ ventaId }: { ventaId: string }) {
           if (!asiento) return null
           return (
             <li key={b}>
-              <span>{nombres[b]}</span>
+              <span>{b === 'urbana' ? t(nombres[b]) : nombres[b]}</span>
               <span className="split__amount">
                 {formatearCentavos(propios.reduce((suma, a) => suma + a.montoCentavos, 0))}
               </span>
               <span className={`status status--${asiento.estado}`}>
-                {ETIQUETA_ESTADO[asiento.estado]}
+                {t(ETIQUETA_ESTADO[asiento.estado])}
               </span>
             </li>
           )
         })}
       </ul>
       <p className="split__note">
-        Asiento registrado en el libro mayor al confirmarse el cobro. El dinero queda retenido hasta
-        el evento y se liquida el {formatearDiaCorto(liquidacion)} (D+
-        {parametros.plazoLiquidacionDias}).
-      </p>
+        {t('Asiento registrado en el libro mayor al confirmarse el cobro. El dinero queda retenido hasta el evento y se liquida el')}{" "}{formatearDiaCorto(liquidacion)} {t('(D+')}{parametros.plazoLiquidacionDias}{t(').')}</p>
     </div>
   )
 }

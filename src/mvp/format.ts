@@ -1,3 +1,8 @@
+import { idioma } from '../i18n'
+
+/** Las fechas siguen el idioma elegido; los importes son siempre pesos argentinos. */
+const locale = () => (idioma() === 'pt' ? 'pt-BR' : 'es-AR')
+
 const pesos = new Intl.NumberFormat('es-AR', {
   style: 'currency',
   currency: 'ARS',
@@ -7,7 +12,7 @@ const pesos = new Intl.NumberFormat('es-AR', {
 export const formatearPesos = (valor: number) => pesos.format(valor)
 
 export function formatearFecha(iso: string): string {
-  return new Intl.DateTimeFormat('es-AR', {
+  return new Intl.DateTimeFormat(locale(), {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
@@ -15,7 +20,7 @@ export function formatearFecha(iso: string): string {
 }
 
 export function formatearHora(iso: string): string {
-  return new Intl.DateTimeFormat('es-AR', {
+  return new Intl.DateTimeFormat(locale(), {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
@@ -24,7 +29,7 @@ export function formatearHora(iso: string): string {
 
 /** Formatea una fecha YYYY-MM-DD (la del reloj de la demo). */
 export function formatearDia(iso: string): string {
-  return new Intl.DateTimeFormat('es-AR', {
+  return new Intl.DateTimeFormat(locale(), {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -43,7 +48,7 @@ export function formatearCentavos(centavos: number): string {
 
 /** Formatea una fecha YYYY-MM-DD en forma corta (ej. "mié, 11 nov"). */
 export function formatearDiaCorto(iso: string): string {
-  return new Intl.DateTimeFormat('es-AR', {
+  return new Intl.DateTimeFormat(locale(), {
     weekday: 'short',
     day: 'numeric',
     month: 'short',

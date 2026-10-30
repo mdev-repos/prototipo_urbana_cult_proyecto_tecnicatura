@@ -1,0 +1,37 @@
+[
+  {
+    "id": "s-sur-a",
+    "nombre": "Sala A",
+    "centroId": "c-sur",
+    "precioHora": 12000,
+    "descripcion": "Batería, dos amplificadores de guitarra y equipo de voces."
+  },
+  {
+    "id": "s-sur-b",
+    "nombre": "Sala B",
+    "centroId": "c-sur",
+    "precioHora": 9000,
+    "descripcion": "Sala chica con teclado y amplificador de bajo."
+  },
+  {
+    "id": "s-subsuelo",
+    "nombre": "Sala Subsuelo",
+    "centroId": "c-subsuelo",
+    "precioHora": 14000,
+    "descripcion": "Sala grande insonorizada con equipo completo."
+  },
+  {
+    "id": "s-patio",
+    "nombre": "Sala Patio",
+    "centroId": "c-patios",
+    "precioHora": 8000,
+    "descripcion": "Sala luminosa con piso de madera, ideal para danza y teatro."
+  },
+  {
+    "id": "s-calesita",
+    "nombre": "Estudio La Calesita",
+    "centroId": "c-calesita",
+    "precioHora": 11000,
+    "descripcion": "Estudio con cabina de grabación y dos micrófonos."
+  }
+]

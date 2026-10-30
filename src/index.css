@@ -1430,3 +1430,415 @@ a:hover {
     gap: 0.9rem;
   }
 }
+
+/* ---------- Selector de idioma ---------- */
+.lang-toggle {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.lang-toggle__btn {
+  display: inline-flex;
+  padding: 2px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  opacity: 0.5;
+  filter: grayscale(0.6);
+  transition: opacity 0.15s ease, filter 0.15s ease, border-color 0.15s ease;
+}
+
+.lang-toggle__btn:hover {
+  opacity: 0.85;
+  filter: none;
+}
+
+.lang-toggle__btn.is-active {
+  opacity: 1;
+  filter: none;
+  border-color: var(--accent);
+}
+
+.lang-toggle__btn svg {
+  width: 24px;
+  height: 16px;
+  border-radius: 3px;
+  display: block;
+}
+
+/* ---------- Proyecto como diapositivas ---------- */
+.deck {
+  max-width: 1040px;
+}
+
+.slide {
+  min-height: 60vh;
+  padding: 2rem 0.25rem 1rem;
+  animation: slide-in 0.25s ease;
+}
+
+.slide__title {
+  font-size: clamp(1.7rem, 4vw, 2.6rem);
+  margin: 0.25rem 0 1.5rem;
+}
+
+.slide__body > * + * {
+  margin-top: 1.1rem;
+}
+
+.slide__mark {
+  width: 72px;
+  height: 72px;
+}
+
+.slide__cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.deck__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.deck__dots {
+  display: flex;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.deck__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--text-muted);
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.deck__dot.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.deck__count {
+  font-size: 0.85rem;
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .slide__cols {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide {
+    animation: none;
+  }
+}
+
+/* ---------- Control de acceso en la puerta ---------- */
+.puerta {
+  display: grid;
+  gap: 1.1rem;
+  margin-top: 1.25rem;
+  max-width: 640px;
+}
+
+.puerta__ticket {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.puerta__ejemplos {
+  display: grid;
+  gap: 0.4rem;
+}
+
+/* ---------- Organigrama ---------- */
+.organigrama {
+  width: 100%;
+  height: auto;
+}
+
+.organigrama__lineas path {
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: 1.5;
+}
+
+.organigrama__caja {
+  fill: var(--surface);
+  stroke: var(--border);
+  stroke-width: 1.2;
+}
+
+.organigrama__caja--acento {
+  stroke: var(--accent);
+}
+
+.organigrama__marco {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 1.2;
+  stroke-dasharray: 5 4;
+}
+
+.organigrama__titulo {
+  fill: var(--text);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.organigrama__titulo--chico {
+  font-size: 13.5px;
+}
+
+.organigrama__detalle {
+  fill: var(--text-muted);
+  font-size: 11.5px;
+}
+
+.organigrama__texto {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+/* ---------- Flujo de financiamiento ---------- */
+.flujo {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.flujo__paso {
+  flex: 1 1 130px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.flujo__paso--acento {
+  border-color: var(--accent);
+}
+
+.flujo__titulo {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.flujo__valor {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.2;
+}
+
+.flujo__flecha {
+  align-self: center;
+  color: var(--text-muted);
+  font-size: 1.3rem;
+}
+
+.flujo__partes {
+  flex: 1 1 150px;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.flujo__resumen {
+  margin-top: 0.9rem;
+}
+
+.flujo__fila {
+  display: contents;
+}
+
+/* ---------- Proceso de venta ---------- */
+.proceso {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.proceso__grupo {
+  padding: 1rem 1.1rem;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+}
+
+.proceso__grupo h3 {
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+}
+
+.proceso__pasos {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.6rem;
+  list-style: none;
+  margin: 0 0 0.6rem;
+  padding: 0;
+}
+
+.proceso__pasos--tres {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.proceso__pasos--uno {
+  grid-template-columns: 1fr;
+  margin-bottom: 0;
+}
+
+.proceso__paso {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.7rem 0.8rem 0.7rem 0.8rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.proceso__paso--alerta {
+  border-color: var(--accent);
+}
+
+.proceso__paso--incidencia {
+  border-color: var(--accent);
+}
+
+.proceso__num {
+  align-self: flex-start;
+  min-width: 1.6rem;
+  padding: 0 0.4rem;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.proceso__titulo {
+  font-weight: 700;
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.proceso__quien {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+@media (max-width: 860px) {
+  .proceso__pasos,
+  .proceso__pasos--tres {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ---------- Contingencia sin conexión ---------- */
+.conexion {
+  display: grid;
+  gap: 0.6rem;
+  margin: 1rem 0;
+}
+
+.bloque {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bloque li {
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+}
+
+/* ---------- Salas de ensayo ---------- */
+.salas {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.grilla td,
+.grilla th {
+  white-space: nowrap;
+}
+
+.franja {
+  display: inline-block;
+  min-width: 4.2rem;
+  padding: 0.2rem 0.4rem;
+  font: inherit;
+  font-size: 0.78rem;
+  text-align: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.franja--libre {
+  color: var(--text);
+  cursor: pointer;
+}
+
+.franja--libre:hover,
+.franja--libre.is-active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.franja--ocupada {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.franja--mia {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}

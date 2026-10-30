@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useMvp } from '../state'
 import type { Centro } from '../types'
 import { Modal } from './Modal'
+import { t } from '../../i18n'
 
 type Props = {
   /** Centro a modificar; si falta, se da de alta uno nuevo. */
@@ -19,7 +20,7 @@ export function CentroForm({ centro, onClose }: Props) {
 
   function enviar(e: FormEvent) {
     e.preventDefault()
-    if (!nombre.trim() || !barrio.trim()) return setError('Completá el nombre y el barrio.')
+    if (!nombre.trim() || !barrio.trim()) return setError(t('Completá el nombre y el barrio.'))
     despachar({
       tipo: 'admin-guardar-centro',
       adminId: admin!.id,
@@ -29,14 +30,14 @@ export function CentroForm({ centro, onClose }: Props) {
   }
 
   return (
-    <Modal titulo={centro ? 'Modificar centro' : 'Nuevo centro'} onClose={onClose}>
+    <Modal titulo={centro ? t('Modificar centro') : t('Nuevo centro')} onClose={onClose}>
       <form className="form" onSubmit={enviar} noValidate>
         <label className="field">
-          <span>Nombre del espacio</span>
+          <span>{t('Nombre del espacio')}</span>
           <input value={nombre} onChange={(e) => setNombre(e.target.value)} />
         </label>
         <label className="field">
-          <span>Barrio</span>
+          <span>{t('Barrio')}</span>
           <input value={barrio} onChange={(e) => setBarrio(e.target.value)} />
         </label>
         {error ? (
@@ -45,7 +46,7 @@ export function CentroForm({ centro, onClose }: Props) {
           </p>
         ) : null}
         <button type="submit" className="btn btn--primary">
-          {centro ? 'Guardar cambios' : 'Dar de alta'}
+          {centro ? t('Guardar cambios') : t('Dar de alta')}
         </button>
       </form>
     </Modal>

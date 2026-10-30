@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { EstadoCuenta } from '../components/EstadoCuenta'
 import { EventCard } from '../components/EventCard'
+import { SalasEnsayo } from '../components/SalasEnsayo'
 import { disponibles, entradasNetas, netoVenta } from '../domain/ventas'
 import { formatearCentavos, formatearFecha, formatearHora } from '../format'
 import { artistas, useMvp } from '../state'
+import { t } from '../../i18n'
 
-type Pestana = 'eventos' | 'cuenta' | 'salas'
+type Pestana = 'eventos' | 'cuenta' | 'salas' | 'ensayo'
 
 export function Artista() {
   const { estado, usuario } = useMvp()
@@ -45,40 +47,44 @@ export function Artista() {
 
   return (
     <div className="page">
-      <p className="eyebrow">Artista</p>
-      <h1>Hola, {usuario.nombre.split(' ')[0]}</h1>
+      <p className="eyebrow">{t('Artista')}</p>
+      <h1>
+        {t('Hola,')} {usuario.nombre.split(' ')[0]}
+      </h1>
       <p className="lead">
-        Seguí tus funciones, cuántas entradas se vendieron y cómo se reparte lo recaudado. Es una
-        vista de consulta: los eventos los gestiona cada centro.
+        {t(
+          'Seguí tus funciones, cuántas entradas se vendieron y cómo se reparte lo recaudado. Es una vista de consulta: los eventos los gestiona cada centro.',
+        )}
       </p>
 
       <dl className="kpis">
         <div>
-          <dt>Funciones activas</dt>
+          <dt>{t('Funciones activas')}</dt>
           <dd>{activos.length}</dd>
         </div>
         <div>
-          <dt>Entradas vendidas</dt>
+          <dt>{t('Entradas vendidas')}</dt>
           <dd>{entradasTotal}</dd>
         </div>
         <div>
-          <dt>Tu parte acumulada</dt>
+          <dt>{t('Tu parte acumulada')}</dt>
           <dd>{formatearCentavos(parteTotal)}</dd>
         </div>
         <div>
-          <dt>Próxima función</dt>
+          <dt>{t('Próxima función')}</dt>
           <dd className="kpi--small">
             {proxima ? `${formatearFecha(proxima.fecha)} · ${formatearHora(proxima.fecha)} h` : '—'}
           </dd>
         </div>
       </dl>
 
-      <div className="tabs" role="tablist" aria-label="Secciones del panel">
+      <div className="tabs" role="tablist" aria-label={t('Secciones del panel')}>
         {(
           [
-            ['eventos', 'Mis eventos'],
-            ['cuenta', 'Estado de cuenta'],
-            ['salas', 'Cartelera de mis salas'],
+            ['eventos', t('Mis eventos')],
+            ['cuenta', t('Estado de cuenta')],
+            ['salas', t('Cartelera de mis salas')],
+            ['ensayo', t('Salas de ensayo')],
           ] as const
         ).map(([id, etiqueta]) => (
           <button
@@ -99,11 +105,11 @@ export function Artista() {
           <table className="table">
             <thead>
               <tr>
-                <th>Evento</th>
-                <th>Fecha</th>
-                <th>Ocupación</th>
-                <th className="num">Recaudado</th>
-                <th className="num">Tu parte</th>
+                <th>{t('Evento')}</th>
+                <th>{t('Fecha')}</th>
+                <th>{t('Ocupación')}</th>
+                <th className="num">{t('Recaudado')}</th>
+                <th className="num">{t('Tu parte')}</th>
               </tr>
             </thead>
             <tbody>
@@ -117,20 +123,25 @@ export function Artista() {
                   <td>
                     {formatearFecha(f.evento.fecha)}
                     <br />
-                    <span className="muted">{formatearHora(f.evento.fecha)} h</span>
+                    <span className="muted">
+                      {formatearHora(f.evento.fecha)} {t('h')}
+                    </span>
                   </td>
                   <td>
                     <div
                       className="bar"
                       role="img"
-                      aria-label={`${f.entradas} de ${f.evento.cupo} entradas vendidas`}
+                      aria-label={t('{vendidas} de {cupo} entradas vendidas', {
+                        vendidas: f.entradas,
+                        cupo: f.evento.cupo,
+                      })}
                     >
                       <span
                         style={{ width: `${Math.min(100, (f.entradas / f.evento.cupo) * 100)}%` }}
                       />
                     </div>
                     <span className="muted bar__label">
-                      {f.entradas} / {f.evento.cupo}
+                      {f.entradas} {t('/')} {f.evento.cupo}
                     </span>
                   </td>
                   <td className="num">{formatearCentavos(f.recaudado)}</td>
@@ -149,8 +160,9 @@ export function Artista() {
       {pestana === 'salas' ? (
         <>
           <p className="muted">
-            Lo que se presenta en los centros donde tenés funciones: ahí mismo se ve la competencia
-            por la portada y por el público.
+            {t(
+              'Lo que se presenta en los centros donde tenés funciones: ahí mismo se ve la competencia por la portada y por el público.',
+            )}
           </p>
           <div className="events" style={{ marginTop: '1.25rem' }}>
             {deMisSalas.map((evento) => (
@@ -165,6 +177,8 @@ export function Artista() {
           </div>
         </>
       ) : null}
+
+      {pestana === 'ensayo' ? <SalasEnsayo /> : null}
     </div>
   )
 }

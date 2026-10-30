@@ -1,5 +1,21 @@
 [
   {
+    "id": "e-ladrillo-hoy",
+    "titulo": "Ladrillo y Cal: noche de boleros",
+    "categoria": "Música",
+    "centroId": "c-sur",
+    "artistaId": "a-ladrillo",
+    "fecha": "2026-11-02T20:00",
+    "precio": 6500,
+    "cupo": 70,
+    "destacado": false,
+    "resto": {
+      "centro": 1,
+      "artista": 1
+    },
+    "descripcion": "Un dúo de voces y guitarras con los boleros de siempre, esta misma noche."
+  },
+  {
     "id": "e-tango",
     "titulo": "Noche de Cámara y Tango",
     "categoria": "Música",
@@ -9,7 +25,10 @@
     "precio": 10000,
     "cupo": 100,
     "destacado": true,
-    "resto": { "centro": 2, "artista": 1 },
+    "resto": {
+      "centro": 2,
+      "artista": 1
+    },
     "descripcion": "Un cuarteto íntimo, repertorio de tango contemporáneo y mesas con velas."
   },
   {
@@ -22,7 +41,10 @@
     "precio": 7500,
     "cupo": 120,
     "destacado": true,
-    "resto": { "centro": 1, "artista": 1 },
+    "resto": {
+      "centro": 1,
+      "artista": 1
+    },
     "descripcion": "Presentación del segundo disco de la banda, con invitados."
   },
   {
@@ -35,7 +57,10 @@
     "precio": 9000,
     "cupo": 80,
     "destacado": false,
-    "resto": { "centro": 1, "artista": 2 },
+    "resto": {
+      "centro": 1,
+      "artista": 2
+    },
     "descripcion": "Una comedia dramática sobre una familia y sus secretos, en sala chica."
   },
   {
@@ -48,7 +73,10 @@
     "precio": 6000,
     "cupo": 60,
     "destacado": false,
-    "resto": { "centro": 1, "artista": 1 },
+    "resto": {
+      "centro": 1,
+      "artista": 1
+    },
     "descripcion": "Voz y guitarra, repertorio propio y algunas versiones."
   },
   {
@@ -61,7 +89,10 @@
     "precio": 5500,
     "cupo": 50,
     "destacado": false,
-    "resto": { "centro": 1, "artista": 1 },
+    "resto": {
+      "centro": 1,
+      "artista": 1
+    },
     "descripcion": "Obra de danza contemporánea pensada para patios y salas íntimas."
   },
   {
@@ -74,7 +105,10 @@
     "precio": 6500,
     "cupo": 90,
     "destacado": false,
-    "resto": { "centro": 1, "artista": 1 },
+    "resto": {
+      "centro": 1,
+      "artista": 1
+    },
     "descripcion": "Stand up y sketches de un dúo de barrio."
   },
   {
@@ -87,7 +121,10 @@
     "precio": 6500,
     "cupo": 70,
     "destacado": false,
-    "resto": { "centro": 1, "artista": 1 },
+    "resto": {
+      "centro": 1,
+      "artista": 1
+    },
     "descripcion": "Segunda fecha de la gira por centros culturales."
   },
   {
@@ -100,7 +137,10 @@
     "precio": 8000,
     "cupo": 110,
     "destacado": false,
-    "resto": { "centro": 2, "artista": 1 },
+    "resto": {
+      "centro": 2,
+      "artista": 1
+    },
     "descripcion": "Peña con empanadas y guitarras, para cantar y bailar."
   },
   {
@@ -113,7 +153,26 @@
     "precio": 3500,
     "cupo": 25,
     "destacado": false,
-    "resto": { "centro": 1, "artista": 1 },
+    "resto": {
+      "centro": 1,
+      "artista": 1
+    },
     "descripcion": "Clase abierta de movimiento y cuerpo en escena, sin experiencia previa."
+  },
+  {
+    "id": "e-ojo-estreno",
+    "titulo": "La casa de los espejos, función de estreno",
+    "categoria": "Teatro",
+    "centroId": "c-telon",
+    "artistaId": "a-ojo",
+    "fecha": "2026-10-30T20:30",
+    "precio": 9000,
+    "cupo": 80,
+    "destacado": false,
+    "resto": {
+      "centro": 1,
+      "artista": 2
+    },
+    "descripcion": "La función de estreno de la comedia dramática, ya realizada y lista para liquidar."
   }
 ]

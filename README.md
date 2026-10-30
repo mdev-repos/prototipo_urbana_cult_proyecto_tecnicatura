@@ -44,18 +44,23 @@ desde la compra hasta la liquidación a D+2.
 
 ## Qué se puede ver
 
-El sitio tiene tres secciones: **Equipo**, **Proyecto** (la materia, la consigna y un resumen de las
-decisiones de diseño) y **MVP**, el prototipo en sí, con seis roles y un panel para cada uno:
+El sitio tiene tres secciones: **Equipo**, **Proyecto** (una presentación de 13 diapositivas que
+resume el trabajo: el cliente, el problema, el análisis, la propuesta, el proceso de venta, el
+alcance, el desarrollo, la tecnología, la inversión y el financiamiento) y **MVP**, el prototipo en
+sí, con seis roles y un panel para cada uno. El MVP está en **español y portugués**, con un
+selector de idioma en la barra de la demo:
 
-- **Cliente final**: cartelera con cupos en vivo, compra con reserva que vence, entradas con QR y pedido de devolución.
-- **Vendedor del centro**: vende solo los eventos de su centro, en efectivo o con medio electrónico, y cierra la caja del día.
-- **Admin del centro**: publica, modifica y da de baja eventos, genera las remesas del efectivo y ve su estado de cuenta.
-- **Artista**: consulta sus funciones, la ocupación y su parte; es una vista de solo lectura.
-- **Admin de plataforma**: gestiona usuarios, roles y centros, y consulta avisos y auditoría. No puede aprobar ni ejecutar pagos.
+- **Cliente final**: cartelera con cupos en vivo, compra con reserva que vence, entradas con QR, pedido de devolución y alquiler de salas de ensayo.
+- **Vendedor del centro**: vende solo los eventos de su centro, en efectivo o con medio electrónico, cierra la caja del día y controla en la puerta el QR de cada entrada. Puede simular un corte de internet: sin conexión vende en efectivo con un bloque numerado de entradas reservado de antemano, y al reconectar se sincroniza.
+- **Admin del centro**: publica, modifica y da de baja eventos, genera las remesas del efectivo, ve su estado de cuenta y las reservas de sus salas de ensayo.
+- **Artista**: consulta sus funciones, la ocupación y su parte, y puede alquilar salas de ensayo.
+- **Admin de plataforma**: gestiona usuarios, roles y centros, y consulta avisos y auditoría. Puede pasar un centro a **solo difusión** (publica su cartelera pero todavía no vende). No puede aprobar ni ejecutar pagos.
 - **Coordinación Central**: Administración General aprueba la liquidación y Boletería y Cobros la ejecuta, concilia remesas y pasarela y resuelve incidencias; ambas ven el libro mayor y el fondo de contingencia.
 
 La barra superior de la demo tiene un **reloj simulado** (`+1 día`, `+7 días`) para llegar a las
-fechas de liquidación, y un botón **Reiniciar** que vuelve todo al estado inicial.
+fechas de liquidación, un botón **Reiniciar** que vuelve todo al estado inicial y el selector de
+idioma con las banderas de Argentina y Brasil. Las fechas se corren al día en que se abre la demo,
+así que siempre hay eventos pasados, de hoy y futuros.
 
 ## Recorrido de uso
 
@@ -63,7 +68,9 @@ fechas de liquidación, y un botón **Reiniciar** que vuelve todo al estado inic
 2. **Un vendedor cobra en efectivo** en la boletería y cierra la caja con una diferencia, que abre una incidencia.
 3. **El admin del centro remesa** el efectivo con una referencia única.
 4. **Se avanza la fecha** hasta D+2 del evento. Administración General **aprueba** la liquidación y Boletería y Cobros la **ejecuta**: el dinero pasa de retenido a pagado.
-5. **Si algo sale mal**, hay un camino para cada caso: un centro que no remesa se bloquea y el fondo cubre al artista; un reclamo se resuelve con una reversión prorrateada; la pasarela puede informar un cobro dos veces.
+5. **En la puerta**, el vendedor valida el QR de una entrada: una vez usada no se acepta de nuevo.
+6. **Una banda alquila una sala de ensayo**: cada franja de una hora se reserva una sola vez y el pago se reparte entre el espacio y Urbana Cult.
+7. **Si algo sale mal**, hay un camino para cada caso: un centro que no remesa se bloquea y el fondo cubre al artista; un reclamo se resuelve con una reversión prorrateada; la pasarela puede informar un cobro dos veces.
 
 El recorrido completo, con capturas, está en la [guía en PDF](./docs/Guia-de-la-demostracion.pdf).
 
@@ -124,13 +131,14 @@ flowchart LR
 
 ```
 src/
-├── components/       # logo vectorial y selector de tema
+├── components/       # logo, organigrama, proceso de venta y selectores de tema e idioma
+├── i18n/             # español y portugués
 ├── layouts/          # cabecera y pie del sitio
-├── pages/            # Equipo y Proyecto
+├── pages/            # Equipo y Proyecto (diapositivas)
 ├── data/             # datos del equipo
 └── mvp/              # el prototipo
     ├── domain/       # reglas de negocio puras: reparto, remesas, liquidación, devoluciones, pasarela
-    ├── data/         # datos de ejemplo en JSON: centros, artistas, eventos, usuarios, parámetros
+    ├── data/         # datos de ejemplo en JSON: centros, artistas, eventos, salas, usuarios, parámetros
     ├── components/   # modales, formularios, tarjetas y piezas compartidas
     ├── pages/        # un panel por rol, más la pantalla de ingreso
     ├── state.tsx     # estado único, reductor y auditoría
@@ -183,8 +191,8 @@ Docente: Ayelen Natalia Arias Gomez
 
 | Integrante | Enlaces |
 |---|---|
-| Álvarez Márquez, Camila | — |
+| Savia, Martín Raúl | [GitHub](https://github.com/martin-2t) · [LinkedIn](https://www.linkedin.com/in/martin-savia-03840738a) |
 | Mazzitelli, Matías Nicolás | [GitHub](https://github.com/mdev-repos) · [LinkedIn](https://www.linkedin.com/in/mnm-dev) |
 | Piedrabuena, Julián | [GitHub](https://github.com/juliganSW) |
-| Savia, Martín Raúl | [GitHub](https://github.com/martin-2t) · [LinkedIn](https://www.linkedin.com/in/martin-savia-03840738a) |
 | Valdez Montigel, Emmanuel Alejandro | [GitHub](https://github.com/Emmanuel-Valdez) · [LinkedIn](https://www.linkedin.com/in/evaldezdev/) · [Web](https://evaldez.ar/) |
+| Álvarez Márquez, Camila | [GitHub](https://github.com/CAM-75) · [LinkedIn](https://www.linkedin.com/in/camila-%C3%A1lvarez-m%C3%A1rquez/) · [Web](https://muckrack.com/camila-alvarez-marquez-) |

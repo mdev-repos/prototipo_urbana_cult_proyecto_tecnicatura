@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Checkout } from '../components/Checkout'
 import { EventCard } from '../components/EventCard'
 import { ReclamoModal } from '../components/ReclamoModal'
+import { SalasEnsayo } from '../components/SalasEnsayo'
 import { RepartoVenta } from '../components/RepartoVenta'
 import { TicketCard } from '../components/TicketCard'
 import { disponibles, entradasNetas } from '../domain/ventas'
@@ -9,8 +10,9 @@ import { formatearCentavos, formatearDiaCorto } from '../format'
 import { useAhora } from '../hooks'
 import { artistas, useMvp } from '../state'
 import type { Evento, Venta } from '../types'
+import { t } from '../../i18n'
 
-type Pestana = 'cartelera' | 'entradas'
+type Pestana = 'cartelera' | 'entradas' | 'salas'
 
 function Cartelera({ onComprar }: { onComprar: (e: Evento) => void }) {
   const { estado } = useMvp()
@@ -28,7 +30,7 @@ function Cartelera({ onComprar }: { onComprar: (e: Evento) => void }) {
 
   return (
     <>
-      <div className="chips" role="group" aria-label="Filtrar por categoría">
+      <div className="chips" role="group" aria-label={t('Filtrar por categoría')}>
         {categorias.map((c) => (
           <button
             key={c}
@@ -37,13 +39,16 @@ function Cartelera({ onComprar }: { onComprar: (e: Evento) => void }) {
             onClick={() => setCategoria(c)}
             aria-pressed={c === categoria}
           >
-            {c}
+            {t(c)}
           </button>
         ))}
       </div>
       <div className="events">
         {eventos.map((evento) => {
           const quedan = disponibles(evento, estado.ventas, estado.reservas, ahora)
+          const soloDifusion = Boolean(
+            estado.centros.find((c) => c.id === evento.centroId)?.soloDifusion,
+          )
           return (
             <EventCard
               key={evento.id}
@@ -52,9 +57,13 @@ function Cartelera({ onComprar }: { onComprar: (e: Evento) => void }) {
               artista={artistas.find((a) => a.id === evento.artistaId)?.nombre ?? ''}
               quedan={quedan}
               accion={{
-                etiqueta: quedan === 0 ? 'Agotado' : 'Comprar',
+                etiqueta: soloDifusion
+                  ? t('Venta en el centro', 'Venda no centro')
+                  : quedan === 0
+                    ? t('Agotado')
+                    : t('Comprar'),
                 onClick: () => onComprar(evento),
-                deshabilitada: quedan === 0,
+                deshabilitada: quedan === 0 || soloDifusion,
               }}
             />
           )
@@ -83,15 +92,15 @@ function Reclamo({
     <div className="claim">
       {abierto ? (
         <p className="notice">
-          <strong>Reclamo en curso.</strong> {abierto.descripcion} Soporte de boletería lo está
-          revisando.
+          <strong>{t('Reclamo en curso.')}</strong> {abierto.descripcion}{' '}
+          {t('Soporte de boletería lo está revisando.')}
         </p>
       ) : (
         <>
           {ultimo ? <p className="notice notice--ok">{ultimo.resolucion}</p> : null}
           {puedeReclamar ? (
             <button type="button" className="btn btn--ghost" onClick={onReclamar}>
-              Reclamar o pedir una devolución
+              {t('Reclamar o pedir una devolución')}
             </button>
           ) : null}
         </>
@@ -108,9 +117,9 @@ function MisEntradas({ irACartelera }: { irACartelera: () => void }) {
   if (ventas.length === 0) {
     return (
       <div className="empty">
-        <p>Todavía no compraste entradas.</p>
+        <p>{t('Todavía no compraste entradas.')}</p>
         <button type="button" className="btn" onClick={irACartelera}>
-          Ver la cartelera
+          {t('Ver la cartelera')}
         </button>
       </div>
     )
@@ -128,11 +137,12 @@ function MisEntradas({ irACartelera }: { irACartelera: () => void }) {
             <header className="order__head">
               <h3>{evento.titulo}</h3>
               <p className="muted">
-                Compra del {formatearDiaCorto(venta.fecha)} · {venta.cantidad}{' '}
-                {venta.cantidad === 1 ? 'entrada' : 'entradas'} ·{' '}
+                {t('Compra del')} {formatearDiaCorto(venta.fecha)} {t('·')} {venta.cantidad}{' '}
+                {venta.cantidad === 1 ? t('entrada') : t('entradas')} {t('·')}{' '}
                 {formatearCentavos(venta.totalCentavos)}
                 {venta.reembolsadoCentavos
-                  ? ` · devuelto ${formatearCentavos(venta.reembolsadoCentavos)}`
+                  ? ' · ' +
+                    t('devuelto {monto}', { monto: formatearCentavos(venta.reembolsadoCentavos) })
                   : ''}
               </p>
             </header>
@@ -166,13 +176,17 @@ export function Cliente() {
 
   return (
     <div className="page">
-      <p className="eyebrow">Cliente final</p>
-      <h1>Hola, {usuario?.nombre.split(' ')[0]}</h1>
+      <p className="eyebrow">{t('Cliente final')}</p>
+      <h1>
+        {t('Hola,')} {usuario?.nombre.split(' ')[0]}
+      </h1>
       <p className="lead">
-        Elegí un evento, pagá y recibí tu entrada. Vas a ver, además, cómo se reparte tu pago.
+        {t(
+          'Elegí un evento, pagá y recibí tu entrada. Vas a ver, además, cómo se reparte tu pago.',
+        )}
       </p>
 
-      <div className="tabs" role="tablist" aria-label="Secciones del panel">
+      <div className="tabs" role="tablist" aria-label={t('Secciones del panel')}>
         <button
           type="button"
           role="tab"
@@ -180,7 +194,7 @@ export function Cliente() {
           className={pestana === 'cartelera' ? 'tab is-active' : 'tab'}
           onClick={() => setPestana('cartelera')}
         >
-          Cartelera
+          {t('Cartelera')}
         </button>
         <button
           type="button"
@@ -189,12 +203,23 @@ export function Cliente() {
           className={pestana === 'entradas' ? 'tab is-active' : 'tab'}
           onClick={() => setPestana('entradas')}
         >
-          Mis entradas
+          {t('Mis entradas')}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={pestana === 'salas'}
+          className={pestana === 'salas' ? 'tab is-active' : 'tab'}
+          onClick={() => setPestana('salas')}
+        >
+          {t('Salas de ensayo')}
         </button>
       </div>
 
       {pestana === 'cartelera' ? (
         <Cartelera onComprar={setComprando} />
+      ) : pestana === 'salas' ? (
+        <SalasEnsayo />
       ) : (
         <MisEntradas irACartelera={() => setPestana('cartelera')} />
       )}

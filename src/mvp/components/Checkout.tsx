@@ -7,6 +7,7 @@ import type { Evento } from '../types'
 import { Modal } from './Modal'
 import { RepartoVenta } from './RepartoVenta'
 import { TicketCard } from './TicketCard'
+import { t } from '../../i18n'
 
 const MAXIMO_POR_COMPRA = 6
 
@@ -101,18 +102,17 @@ export function Checkout({ evento, onClose }: Props) {
 
   return (
     <Modal
-      titulo={resultado?.tipo === 'ok' ? 'Compra confirmada' : 'Comprar entradas'}
+      titulo={resultado?.tipo === 'ok' ? t('Compra confirmada') : t('Comprar entradas')}
       onClose={cerrar}
     >
       <div className="checkout__event">
         <p className="checkout__title">{evento.titulo}</p>
         <p className="muted">
-          {artista} · {centro}
+          {artista} {t('·')}{" "}{centro}
         </p>
         <p className="muted">
-          {formatearFecha(evento.fecha)} · {formatearHora(evento.fecha)} h ·{' '}
-          {formatearPesos(evento.precio)} c/u
-        </p>
+          {formatearFecha(evento.fecha)} {t('·')}{" "}{formatearHora(evento.fecha)} {t('h ·')}{' '}
+          {formatearPesos(evento.precio)} {t('c/u')}</p>
       </div>
 
       {resultado?.tipo === 'ok' ? (
@@ -120,33 +120,27 @@ export function Checkout({ evento, onClose }: Props) {
       ) : resultado?.tipo === 'rechazado' ? (
         <div className="notice notice--error">
           <p>
-            <strong>El pago fue rechazado.</strong> No se cobró nada y el cupo que habías reservado
-            volvió a quedar libre.
-          </p>
+            <strong>{t('El pago fue rechazado.')}</strong> {t('No se cobró nada y el cupo que habías reservado volvió a quedar libre.')}</p>
           <button type="button" className="btn" onClick={() => setResultado(null)}>
-            Intentar de nuevo
-          </button>
+            {t('Intentar de nuevo')}</button>
         </div>
       ) : resultado?.tipo === 'vencida' ? (
         <div className="notice notice--error">
           <p>
-            <strong>La reserva venció.</strong> Pasaron más de {parametros.vencimientoReservaMin}{' '}
-            minutos sin pagar, así que el cupo se liberó para que lo tome otra persona.
-          </p>
+            <strong>{t('La reserva venció.')}</strong> {t('Pasaron más de')}{" "}{parametros.vencimientoReservaMin}{' '}
+            {t('minutos sin pagar, así que el cupo se liberó para que lo tome otra persona.')}</p>
           <button type="button" className="btn" onClick={() => setResultado(null)}>
-            Volver a reservar
-          </button>
+            {t('Volver a reservar')}</button>
         </div>
       ) : vigente && reserva ? (
         <div className="checkout__step">
           <p className="notice">
-            Cupo reservado para <strong>{reserva.cantidad}</strong>{' '}
-            {reserva.cantidad === 1 ? 'entrada' : 'entradas'}. Tenés{' '}
+            {t('Cupo reservado para')}{" "}<strong>{reserva.cantidad}</strong>{' '}
+            {reserva.cantidad === 1 ? 'entrada' : 'entradas'}{t('. Tenés')}{' '}
             <strong className="checkout__timer">{formatearCuenta(reserva.venceTs - ahora)}</strong>{' '}
-            para pagar.
-          </p>
+            {t('para pagar.')}</p>
           <p className="checkout__total">
-            Total <strong>{formatearPesos(total)}</strong>
+            {t('Total')}{" "}<strong>{formatearPesos(total)}</strong>
           </p>
           <label className="check">
             <input
@@ -154,15 +148,14 @@ export function Checkout({ evento, onClose }: Props) {
               checked={simularRechazo}
               onChange={(e) => setSimularRechazo(e.target.checked)}
             />
-            <span>Simular que la pasarela rechaza el pago</span>
+            <span>{t('Simular que la pasarela rechaza el pago')}</span>
           </label>
           <div className="checkout__actions">
             <button type="button" className="btn btn--primary" onClick={pagar}>
-              Pagar {formatearPesos(total)}
+              {t('Pagar')}{" "}{formatearPesos(total)}
             </button>
             <button type="button" className="btn" onClick={cancelar}>
-              Cancelar
-            </button>
+              {t('Cancelar')}</button>
           </div>
           <button
             type="button"
@@ -175,15 +168,14 @@ export function Checkout({ evento, onClose }: Props) {
               })
             }
           >
-            Demo: ver qué pasa si la reserva vence
-          </button>
+            {t('Demo: ver qué pasa si la reserva vence')}</button>
         </div>
       ) : libres === 0 ? (
-        <p className="notice notice--error">Este evento está agotado.</p>
+        <p className="notice notice--error">{t('Este evento está agotado.')}</p>
       ) : (
         <div className="checkout__step">
           <label className="field">
-            <span>Cantidad (máximo {maxElegible})</span>
+            <span>{t('Cantidad (máximo')}{" "}{maxElegible}{t(')')}</span>
             <select value={cantidadActual} onChange={(e) => setCantidad(Number(e.target.value))}>
               {Array.from({ length: maxElegible }, (_, i) => i + 1).map((n) => (
                 <option key={n} value={n}>
@@ -193,15 +185,12 @@ export function Checkout({ evento, onClose }: Props) {
             </select>
           </label>
           <p className="checkout__total">
-            Total <strong>{formatearPesos(total)}</strong>
+            {t('Total')}{" "}<strong>{formatearPesos(total)}</strong>
           </p>
           <p className="muted checkout__hint">
-            Al continuar apartamos tu cupo durante {parametros.vencimientoReservaMin} minutos, así
-            nadie más puede quedarse con tus entradas mientras pagás.
-          </p>
+            {t('Al continuar apartamos tu cupo durante')}{" "}{parametros.vencimientoReservaMin} {t('minutos, así nadie más puede quedarse con tus entradas mientras pagás.')}</p>
           <button type="button" className="btn btn--primary" onClick={reservar}>
-            Reservar y continuar
-          </button>
+            {t('Reservar y continuar')}</button>
         </div>
       )}
     </Modal>
@@ -219,10 +208,8 @@ function Confirmacion({ ventaId, onClose }: { ventaId: string; onClose: () => vo
   return (
     <div className="checkout__step">
       <p className="notice notice--ok">
-        Pago aprobado. Emitimos{' '}
-        {entradas.length === 1 ? 'tu entrada' : `tus ${entradas.length} entradas`} con código QR
-        único.
-      </p>
+        {t('Pago aprobado. Emitimos')}{' '}
+        {entradas.length === 1 ? t('tu entrada') : t('tus {n} entradas', { n: entradas.length })} {t('con código QR único.')}</p>
       <div className="tickets">
         {entradas.map((t) => (
           <TicketCard key={t.id} entrada={t} evento={evento} centro={centro} />
@@ -230,8 +217,7 @@ function Confirmacion({ ventaId, onClose }: { ventaId: string; onClose: () => vo
       </div>
       <RepartoVenta ventaId={ventaId} />
       <button type="button" className="btn btn--primary" onClick={onClose}>
-        Listo
-      </button>
+        {t('Listo')}</button>
     </div>
   )
 }

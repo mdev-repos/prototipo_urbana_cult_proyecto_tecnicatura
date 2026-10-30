@@ -1,6 +1,7 @@
 import { QRCodeSVG } from 'qrcode.react'
 import { formatearFecha, formatearHora } from '../format'
 import type { Entrada, Evento } from '../types'
+import { t } from '../../i18n'
 
 type Props = {
   entrada: Entrada
@@ -18,10 +19,9 @@ export function TicketCard({ entrada, evento, centro }: Props) {
         <p className="ticket__title">{evento.titulo}</p>
         <p className="muted">{centro}</p>
         <p className="ticket__when">
-          {formatearFecha(evento.fecha)} · {formatearHora(evento.fecha)} h
-        </p>
+          {formatearFecha(evento.fecha)} {t('·')}{" "}{formatearHora(evento.fecha)} {t('h')}</p>
         <p className="ticket__code">{entrada.codigo}</p>
-        {entrada.anulada ? <p className="ticket__void">Anulada por devolución</p> : null}
+        {entrada.anulada ? <p className="ticket__void">{t('Anulada por devolución')}</p> : null}
       </div>
     </article>
   )

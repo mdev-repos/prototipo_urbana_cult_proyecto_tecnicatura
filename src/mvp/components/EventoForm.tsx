@@ -4,6 +4,7 @@ import { formatearCentavos } from '../format'
 import { artistas, parametros, useMvp } from '../state'
 import type { Evento } from '../types'
 import { Modal } from './Modal'
+import { t } from '../../i18n'
 
 const CATEGORIAS = ['Música', 'Teatro', 'Danza', 'Humor', 'Taller']
 
@@ -52,20 +53,20 @@ export function EventoForm({ evento, base, onClose }: Props) {
     e.preventDefault()
     const p = Math.round(Number(precio))
     const c = Math.round(Number(cupo))
-    if (!titulo.trim()) return setError('Poné un título para el evento.')
-    if (!fecha) return setError('Elegí la fecha y la hora.')
-    if (fecha.slice(0, 10) < estado.hoy) return setError('La fecha no puede ser anterior a hoy.')
-    if (!(p >= 1)) return setError('El precio debe ser mayor a cero.')
-    if (!(c >= 1)) return setError('El cupo debe ser de al menos 1 entrada.')
+    if (!titulo.trim()) return setError(t('Poné un título para el evento.'))
+    if (!fecha) return setError(t('Elegí la fecha y la hora.'))
+    if (fecha.slice(0, 10) < estado.hoy) return setError(t('La fecha no puede ser anterior a hoy.'))
+    if (!(p >= 1)) return setError(t('El precio debe ser mayor a cero.'))
+    if (!(c >= 1)) return setError(t('El cupo debe ser de al menos 1 entrada.'))
     if (evento && c < vendidas) {
-      return setError(`El cupo no puede ser menor que las ${vendidas} entradas ya vendidas.`)
+      return setError(t('El cupo no puede ser menor que las {n} entradas ya vendidas.', { n: vendidas }))
     }
     if (!repartoValido)
-      return setError('El reparto entre centro y artista debe ser de números enteros positivos.')
+      return setError(t('El reparto entre centro y artista debe ser de números enteros positivos.'))
     const choque = estado.eventos.some(
       (x) => x.centroId === centroId && !x.baja && x.id !== evento?.id && x.fecha === fecha,
     )
-    if (choque) return setError('Tu centro ya tiene un evento en ese día y horario.')
+    if (choque) return setError(t('Tu centro ya tiene un evento en ese día y horario.'))
 
     despachar({
       tipo: 'guardar-evento',
@@ -86,29 +87,29 @@ export function EventoForm({ evento, base, onClose }: Props) {
   }
 
   return (
-    <Modal titulo={evento ? 'Modificar evento' : 'Nuevo evento'} onClose={onClose}>
+    <Modal titulo={evento ? t('Modificar evento') : t('Nuevo evento')} onClose={onClose}>
       {evento && vendidas > 0 ? (
         <p className="notice">
-          Este evento ya tiene {vendidas} entradas vendidas. Si cambiás la fecha se avisa a
-          Coordinación, y el reparto ya no se puede modificar.
-        </p>
+          {t('Este evento ya tiene')}{" "}{vendidas} {t('entradas vendidas. Si cambiás la fecha se avisa a Coordinación, y el reparto ya no se puede modificar.')}</p>
       ) : null}
       <form className="form" onSubmit={enviar} noValidate>
         <label className="field">
-          <span>Título</span>
+          <span>{t('Título')}</span>
           <input value={titulo} onChange={(e) => setTitulo(e.target.value)} />
         </label>
         <div className="form__row">
           <label className="field">
-            <span>Categoría</span>
+            <span>{t('Categoría')}</span>
             <select value={categoria} onChange={(e) => setCategoria(e.target.value)}>
               {[...new Set([...CATEGORIAS, categoria])].map((c) => (
-                <option key={c}>{c}</option>
+                <option key={c} value={c}>
+                  {t(c)}
+                </option>
               ))}
             </select>
           </label>
           <label className="field">
-            <span>Artista</span>
+            <span>{t('Artista')}</span>
             <select value={artistaId} onChange={(e) => setArtistaId(e.target.value)}>
               {artistas.map((a) => (
                 <option key={a.id} value={a.id}>
@@ -119,25 +120,25 @@ export function EventoForm({ evento, base, onClose }: Props) {
           </label>
         </div>
         <label className="field">
-          <span>Fecha y hora</span>
+          <span>{t('Fecha y hora')}</span>
           <input type="datetime-local" value={fecha} onChange={(e) => setFecha(e.target.value)} />
         </label>
         <div className="form__row">
           <label className="field">
-            <span>Precio por entrada ($)</span>
+            <span>{t('Precio por entrada ($)')}</span>
             <input inputMode="numeric" value={precio} onChange={(e) => setPrecio(e.target.value)} />
           </label>
           <label className="field">
-            <span>Cupo</span>
+            <span>{t('Cupo')}</span>
             <input inputMode="numeric" value={cupo} onChange={(e) => setCupo(e.target.value)} />
           </label>
         </div>
 
         <fieldset className="choice">
-          <legend>Reparto pactado con el artista</legend>
+          <legend>{t('Reparto pactado con el artista')}</legend>
           <div className="form__row">
             <label className="field">
-              <span>Parte del centro</span>
+              <span>{t('Parte del centro')}</span>
               <input
                 inputMode="numeric"
                 value={pesoCentro}
@@ -146,7 +147,7 @@ export function EventoForm({ evento, base, onClose }: Props) {
               />
             </label>
             <label className="field">
-              <span>Parte del artista</span>
+              <span>{t('Parte del artista')}</span>
               <input
                 inputMode="numeric"
                 value={pesoArtista}
@@ -156,28 +157,31 @@ export function EventoForm({ evento, base, onClose }: Props) {
             </label>
           </div>
           <p className="muted checkout__hint">
-            Urbana retiene {parametros.comisionUrbanaPct} % (lo fija la Asamblea). El resto se
-            divide entre centro y artista en la proporción que acuerden.
-            {ejemplo
-              ? ` Por cada ${formatearCentavos(1_000_000)}: centro ${formatearCentavos(ejemplo.centro)}, artista ${formatearCentavos(ejemplo.artista)}, Urbana ${formatearCentavos(ejemplo.urbana)}.`
+            {t('Urbana retiene')}{" "}{parametros.comisionUrbanaPct} {t('% (lo fija la Asamblea). El resto se divide entre centro y artista en la proporción que acuerden.')}{ejemplo
+              ? ' ' +
+                t('Por cada {total}: centro {centro}, artista {artista}, Urbana {urbana}.', {
+                  total: formatearCentavos(1_000_000),
+                  centro: formatearCentavos(ejemplo.centro),
+                  artista: formatearCentavos(ejemplo.artista),
+                  urbana: formatearCentavos(ejemplo.urbana),
+                })
               : ''}
           </p>
         </fieldset>
 
         <label className="field">
-          <span>Descripción</span>
+          <span>{t('Descripción')}</span>
           <textarea rows={3} value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
         </label>
         <p className="muted checkout__hint">
-          La portada la define la Asamblea: un evento no puede marcarse como destacado desde acá.
-        </p>
+          {t('La portada la define la Asamblea: un evento no puede marcarse como destacado desde acá.')}</p>
         {error ? (
           <p className="form__error" role="alert">
             {error}
           </p>
         ) : null}
         <button type="submit" className="btn btn--primary">
-          {evento ? 'Guardar cambios' : 'Publicar evento'}
+          {evento ? t('Guardar cambios') : t('Publicar evento')}
         </button>
       </form>
     </Modal>

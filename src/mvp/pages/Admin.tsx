@@ -6,9 +6,16 @@ import { formatearDiaCorto } from '../format'
 import { etiquetaUsuario } from '../roles'
 import { artistas, parametros, useMvp } from '../state'
 import type { Auditoria, Centro, Usuario } from '../types'
+import { t } from '../../i18n'
 
 type Pestana = 'usuarios' | 'centros' | 'avisos' | 'auditoria' | 'pagos'
 type FiltroAuditoria = 'todos' | Auditoria['tipo']
+
+const ETIQUETA_AUDITORIA_PLURAL: Record<Auditoria['tipo'], string> = {
+  acceso: 'Accesos',
+  cambio: 'Cambios',
+  denegado: 'Denegados',
+}
 
 const ETIQUETA_AUDITORIA: Record<Auditoria['tipo'], string> = {
   acceso: 'Acceso',
@@ -31,20 +38,18 @@ function UsuariosTab() {
     <>
       <div className="toolbar">
         <button type="button" className="btn btn--primary" onClick={() => setEdicion({})}>
-          Nuevo usuario
-        </button>
+          {t('Nuevo usuario')}</button>
         <span className="muted">
-          Solo el Admin de plataforma crea usuarios, cambia roles y deshabilita cuentas.
-        </span>
+          {t('Solo el Admin de plataforma crea usuarios, cambia roles y deshabilita cuentas.')}</span>
       </div>
       <div className="table-wrap">
         <table className="table">
           <thead>
             <tr>
-              <th>Usuario</th>
-              <th>Rol</th>
-              <th>Pertenece a</th>
-              <th>Estado</th>
+              <th>{t('Usuario')}</th>
+              <th>{t('Rol')}</th>
+              <th>{t('Pertenece a')}</th>
+              <th>{t('Estado')}</th>
               <th />
             </tr>
           </thead>
@@ -60,7 +65,7 @@ function UsuariosTab() {
                 <td>{detalle(u)}</td>
                 <td>
                   <span className={u.activo === false ? 'status' : 'status status--disponible'}>
-                    {u.activo === false ? 'Deshabilitado' : 'Activo'}
+                    {u.activo === false ? t('Deshabilitado') : t('Activo')}
                   </span>
                 </td>
                 <td className="actions">
@@ -69,8 +74,7 @@ function UsuariosTab() {
                     className="btn btn--ghost"
                     onClick={() => setEdicion({ usuario: u })}
                   >
-                    Modificar
-                  </button>
+                    {t('Modificar')}</button>
                   {u.id === admin.id ? null : (
                     <button
                       type="button"
@@ -84,7 +88,7 @@ function UsuariosTab() {
                         })
                       }
                     >
-                      {u.activo === false ? 'Habilitar' : 'Deshabilitar'}
+                      {u.activo === false ? t('Habilitar') : t('Deshabilitar')}
                     </button>
                   )}
                 </td>
@@ -94,9 +98,7 @@ function UsuariosTab() {
         </table>
       </div>
       <p className="muted checkout__hint" style={{ marginTop: '1rem' }}>
-        Deshabilitar una cuenta no borra su historial: las ventas y los registros siguen asociados a
-        su nombre.
-      </p>
+        {t('Deshabilitar una cuenta no borra su historial: las ventas y los registros siguen asociados a su nombre.')}</p>
       {edicion ? <UsuarioForm usuario={edicion.usuario} onClose={() => setEdicion(null)} /> : null}
     </>
   )
@@ -111,16 +113,15 @@ function CentrosTab() {
     <>
       <div className="toolbar">
         <button type="button" className="btn btn--primary" onClick={() => setEdicion({})}>
-          Nuevo centro
-        </button>
+          {t('Nuevo centro')}</button>
       </div>
       <div className="table-wrap">
         <table className="table">
           <thead>
             <tr>
-              <th>Espacio</th>
-              <th>Estado</th>
-              <th>Motivo</th>
+              <th>{t('Espacio')}</th>
+              <th>{t('Estado')}</th>
+              <th>{t('Motivo')}</th>
               <th />
             </tr>
           </thead>
@@ -135,8 +136,8 @@ function CentrosTab() {
                 parametros.plazoRemesaDias,
               )
               const motivos = [
-                vencida ? 'Remesas vencidas' : null,
-                c.bloqueoManual ? 'Bloqueo manual' : null,
+                vencida ? t('Remesas vencidas') : null,
+                c.bloqueoManual ? t('Bloqueo manual') : null,
               ].filter(Boolean)
               return (
                 <tr key={c.id}>
@@ -153,18 +154,21 @@ function CentrosTab() {
                           : 'status status--disponible'
                       }
                     >
-                      {c.estado === 'bloqueado' ? 'Bloqueado' : 'Habilitado'}
+                      {c.estado === 'bloqueado' ? t('Bloqueado') : t('Habilitado')}
                     </span>
                   </td>
-                  <td className="muted">{motivos.join(' · ') || '—'}</td>
+                  <td className="muted">
+                    {[...motivos, c.soloDifusion ? t('Solo difusión', 'Só divulgação') : null]
+                      .filter(Boolean)
+                      .join(' · ') || '—'}
+                  </td>
                   <td className="actions">
                     <button
                       type="button"
                       className="btn btn--ghost"
                       onClick={() => setEdicion({ centro: c })}
                     >
-                      Modificar
-                    </button>
+                      {t('Modificar')}</button>
                     <button
                       type="button"
                       className="btn btn--ghost"
@@ -177,7 +181,23 @@ function CentrosTab() {
                         })
                       }
                     >
-                      {c.bloqueoManual ? 'Quitar bloqueo manual' : 'Bloquear'}
+                      {c.bloqueoManual ? t('Quitar bloqueo manual') : t('Bloquear')}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn--ghost"
+                      onClick={() =>
+                        despachar({
+                          tipo: 'admin-difusion-centro',
+                          adminId: admin.id,
+                          centroId: c.id,
+                          soloDifusion: !c.soloDifusion,
+                        })
+                      }
+                    >
+                      {c.soloDifusion
+                        ? t('Habilitar la venta', 'Habilitar a venda')
+                        : t('Pasar a solo difusión', 'Passar para só divulgação')}
                     </button>
                   </td>
                 </tr>
@@ -187,9 +207,7 @@ function CentrosTab() {
         </table>
       </div>
       <p className="muted checkout__hint" style={{ marginTop: '1rem' }}>
-        Un centro queda bloqueado automáticamente cuando tiene remesas vencidas, y vuelve a
-        habilitarse al regularizarlas. El bloqueo manual no se levanta solo.
-      </p>
+        {t('Un centro queda bloqueado automáticamente cuando tiene remesas vencidas, y vuelve a habilitarse al regularizarlas. El bloqueo manual no se levanta solo.')}</p>
       {edicion ? <CentroForm centro={edicion.centro} onClose={() => setEdicion(null)} /> : null}
     </>
   )
@@ -198,7 +216,7 @@ function CentrosTab() {
 function AvisosTab() {
   const { estado } = useMvp()
   const avisos = estado.avisos.filter((a) => a.para === 'admin').reverse()
-  if (avisos.length === 0) return <p className="muted">No hay avisos por ahora.</p>
+  if (avisos.length === 0) return <p className="muted">{t('No hay avisos por ahora.')}</p>
   return (
     <ul className="avisos avisos--list">
       {avisos.map((a) => (
@@ -221,7 +239,7 @@ function AuditoriaTab() {
 
   return (
     <>
-      <div className="chips" role="group" aria-label="Filtrar el registro">
+      <div className="chips" role="group" aria-label={t('Filtrar el registro')}>
         {(['todos', 'acceso', 'cambio', 'denegado'] as const).map((f) => (
           <button
             key={f}
@@ -230,23 +248,22 @@ function AuditoriaTab() {
             aria-pressed={f === filtro}
             onClick={() => setFiltro(f)}
           >
-            {f === 'todos' ? 'Todos' : `${ETIQUETA_AUDITORIA[f]}s`}
+            {f === 'todos' ? t('Todos') : t(ETIQUETA_AUDITORIA_PLURAL[f])}
           </button>
         ))}
       </div>
       {registros.length === 0 ? (
         <p className="muted" style={{ marginTop: '1rem' }}>
-          Todavía no hay registros.
-        </p>
+          {t('Todavía no hay registros.')}</p>
       ) : (
         <div className="table-wrap" style={{ marginTop: '1rem' }}>
           <table className="table">
             <thead>
               <tr>
-                <th>Día</th>
-                <th>Quién</th>
-                <th>Tipo</th>
-                <th>Detalle</th>
+                <th>{t('Día')}</th>
+                <th>{t('Quién')}</th>
+                <th>{t('Tipo')}</th>
+                <th>{t('Detalle')}</th>
               </tr>
             </thead>
             <tbody>
@@ -256,7 +273,7 @@ function AuditoriaTab() {
                   <td>{estado.usuarios.find((u) => u.id === r.usuarioId)?.nombre ?? '—'}</td>
                   <td>
                     <span className={r.tipo === 'denegado' ? 'status status--vencida' : 'status'}>
-                      {ETIQUETA_AUDITORIA[r.tipo]}
+                      {t(ETIQUETA_AUDITORIA[r.tipo])}
                     </span>
                   </td>
                   <td>{r.texto}</td>
@@ -279,29 +296,28 @@ function PagosTab() {
     despachar({
       tipo: 'acceso-denegado',
       usuarioId: admin!.id,
-      detalle: `Intentó ${operacion}: acceso denegado, su rol no permite esta operación.`,
+      detalle: t('Intentó {operacion}: acceso denegado, su rol no permite esta operación.', {
+        operacion: t(operacion),
+      }),
     })
     setMensaje(
-      'Acceso denegado: su rol no permite esta operación. El intento quedó registrado en la auditoría.',
+      t(
+        'Acceso denegado: su rol no permite esta operación. El intento quedó registrado en la auditoría.',
+      ),
     )
   }
 
   return (
     <div className="caja">
       <section>
-        <h2 className="caja__title">Pagos y liquidaciones</h2>
+        <h2 className="caja__title">{t('Pagos y liquidaciones')}</h2>
         <p className="muted">
-          Hay una separación de funciones: <strong>Administración General aprueba</strong> los pagos
-          y <strong>Boletería y Cobros los ejecuta</strong>. El Admin de plataforma tiene el control
-          técnico, pero ningún permiso sobre el dinero, para que nadie concentre todo el circuito.
-        </p>
+          {t('Hay una separación de funciones:')}{" "}<strong>{t('Administración General aprueba')}</strong> {t('los pagos y')}{" "}<strong>{t('Boletería y Cobros los ejecuta')}</strong>{t('. El Admin de plataforma tiene el control técnico, pero ningún permiso sobre el dinero, para que nadie concentre todo el circuito.')}</p>
         <div className="checkout__actions">
           <button type="button" className="btn" onClick={() => intentar('aprobar una liquidación')}>
-            Aprobar liquidación
-          </button>
+            {t('Aprobar liquidación')}</button>
           <button type="button" className="btn" onClick={() => intentar('ejecutar un pago')}>
-            Ejecutar pago
-          </button>
+            {t('Ejecutar pago')}</button>
         </div>
         {mensaje ? (
           <p className="notice notice--error" role="alert">
@@ -324,42 +340,40 @@ export function Admin() {
   const denegados = estado.auditoria.filter((r) => r.tipo === 'denegado').length
 
   const pestanas: [Pestana, string][] = [
-    ['usuarios', 'Usuarios y roles'],
-    ['centros', 'Centros'],
-    ['avisos', 'Avisos'],
-    ['auditoria', 'Auditoría'],
-    ['pagos', 'Pagos'],
+    ['usuarios', t('Usuarios y roles')],
+    ['centros', t('Centros')],
+    ['avisos', t('Avisos')],
+    ['auditoria', t('Auditoría')],
+    ['pagos', t('Pagos')],
   ]
 
   return (
     <div className="page">
-      <p className="eyebrow">Admin de plataforma</p>
-      <h1>Hola, {usuario.nombre.split(' ')[0]}</h1>
+      <p className="eyebrow">{t('Admin de plataforma')}</p>
+      <h1>{t('Hola,')}{" "}{usuario.nombre.split(' ')[0]}</h1>
       <p className="lead">
-        Gestioná usuarios, roles y centros, y seguí los avisos y el registro de lo que pasa en la
-        plataforma. Tenés el control técnico, pero no podés aprobar ni ejecutar pagos.
-      </p>
+        {t('Gestioná usuarios, roles y centros, y seguí los avisos y el registro de lo que pasa en la plataforma. Tenés el control técnico, pero no podés aprobar ni ejecutar pagos.')}</p>
 
       <dl className="kpis">
         <div>
-          <dt>Usuarios activos</dt>
+          <dt>{t('Usuarios activos')}</dt>
           <dd>{activos}</dd>
         </div>
         <div>
-          <dt>Centros bloqueados</dt>
+          <dt>{t('Centros bloqueados')}</dt>
           <dd className={bloqueados > 0 ? 'kpi--closed' : undefined}>{bloqueados}</dd>
         </div>
         <div>
-          <dt>Avisos</dt>
+          <dt>{t('Avisos')}</dt>
           <dd>{avisos}</dd>
         </div>
         <div>
-          <dt>Accesos denegados</dt>
+          <dt>{t('Accesos denegados')}</dt>
           <dd>{denegados}</dd>
         </div>
       </dl>
 
-      <div className="tabs" role="tablist" aria-label="Secciones del panel">
+      <div className="tabs" role="tablist" aria-label={t('Secciones del panel')}>
         {pestanas.map(([id, etiqueta]) => (
           <button
             key={id}

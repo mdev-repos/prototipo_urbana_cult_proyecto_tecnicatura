@@ -1,5 +1,6 @@
 import type { Evento } from '../types'
 import { formatearFecha, formatearHora, formatearPesos } from '../format'
+import { t } from '../../i18n'
 
 type Props = {
   evento: Evento
@@ -28,24 +29,23 @@ export function EventCard({ evento, centro, artista, quedan, accion }: Props) {
           background: `linear-gradient(135deg, hsl(${h} 45% 30%), hsl(${(h + 50) % 360} 50% 16%))`,
         }}
       >
-        <span className="event__tag">{evento.categoria}</span>
-        {evento.destacado ? <span className="event__tag event__tag--star">Destacado</span> : null}
+        <span className="event__tag">{t(evento.categoria)}</span>
+        {evento.destacado ? <span className="event__tag event__tag--star">{t('Destacado')}</span> : null}
         <p className="event__cover-title">{evento.titulo}</p>
       </div>
       <div className="event__body">
         <p className="event__meta">
-          {artista} · {centro}
+          {artista} {t('·')}{" "}{centro}
         </p>
-        <p className="event__desc">{evento.descripcion}</p>
+        <p className="event__desc">{t(evento.descripcion)}</p>
         <div className="event__foot">
           <div>
             <p className="event__when">
-              {formatearFecha(evento.fecha)} · {formatearHora(evento.fecha)} h
-            </p>
+              {formatearFecha(evento.fecha)} {t('·')}{" "}{formatearHora(evento.fecha)} {t('h')}</p>
             <p className="event__price">{formatearPesos(evento.precio)}</p>
             {quedan !== undefined ? (
               <p className={quedan <= 10 ? 'event__left event__left--low' : 'event__left'}>
-                {quedan === 0 ? 'Agotado' : `Quedan ${quedan}`}
+                {quedan === 0 ? t('Agotado') : t('Quedan {n}', { n: quedan })}
               </p>
             ) : null}
           </div>

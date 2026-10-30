@@ -52,6 +52,26 @@ export const netoVenta = (v: Venta) => v.totalCentavos - (v.reembolsadoCentavos 
 export const entradasNetas = (v: Venta) => v.cantidad - (v.devueltas ?? 0)
 
 /** Cupo que todavía se puede vender: descuenta lo vendido y las reservas vigentes. */
+/** Entradas que se reservan de antemano a cada evento para vender sin conexión. */
+export const BLOQUE_CONTINGENCIA = 10
+
+/** Tamaño del bloque de un evento; los eventos muy chicos no reservan bloque. */
+export function tamanoBloque(evento: Evento): number {
+  return evento.cupo >= 40 ? BLOQUE_CONTINGENCIA : 0
+}
+
+/** Entradas del bloque que ya se vendieron y sincronizaron. */
+export function bloqueUsado(evento: Evento, ventas: Venta[]): number {
+  return ventas
+    .filter((v) => v.eventoId === evento.id && v.contingencia)
+    .reduce((suma, v) => suma + v.cantidad, 0)
+}
+
+/** Entradas del bloque que siguen apartadas, sin vender ni sincronizar. */
+export function bloqueLibre(evento: Evento, ventas: Venta[]): number {
+  return Math.max(0, tamanoBloque(evento) - bloqueUsado(evento, ventas))
+}
+
 export function disponibles(
   evento: Evento,
   ventas: Venta[],
@@ -65,7 +85,8 @@ export function disponibles(
   const reservadas = reservas
     .filter((r) => r.eventoId === evento.id && r.venceTs > ahora && r.id !== ignorarReservaId)
     .reduce((suma, r) => suma + r.cantidad, 0)
-  return Math.max(0, evento.cupo - vendidas - reservadas)
+  // El bloque de contingencia queda apartado: la web y la boletería con conexión no lo venden.
+  return Math.max(0, evento.cupo - vendidas - reservadas - bloqueLibre(evento, ventas))
 }
 
 function hash(texto: string): number {

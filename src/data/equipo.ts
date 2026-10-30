@@ -9,10 +9,14 @@ export type Integrante = {
   web?: string
 }
 
-// Orden alfabético por apellido, como figura en la portada del documento.
-// Pendiente: enlaces de Camila Álvarez Márquez.
+// Orden por aporte al trabajo, de mayor a menor.
 export const integrantes: Integrante[] = [
-  { apellido: 'Álvarez Márquez', nombre: 'Camila' },
+  {
+    apellido: 'Savia',
+    nombre: 'Martín Raúl',
+    github: 'martin-2t',
+    linkedin: 'https://www.linkedin.com/in/martin-savia-03840738a',
+  },
   {
     apellido: 'Mazzitelli',
     nombre: 'Matías Nicolás',
@@ -21,17 +25,18 @@ export const integrantes: Integrante[] = [
   },
   { apellido: 'Piedrabuena', nombre: 'Julián', github: 'juliganSW' },
   {
-    apellido: 'Savia',
-    nombre: 'Martín Raúl',
-    github: 'martin-2t',
-    linkedin: 'https://www.linkedin.com/in/martin-savia-03840738a',
-  },
-  {
     apellido: 'Valdez Montigel',
     nombre: 'Emmanuel Alejandro',
     github: 'Emmanuel-Valdez',
     linkedin: 'https://www.linkedin.com/in/evaldezdev/',
     web: 'https://evaldez.ar/',
+  },
+  {
+    apellido: 'Álvarez Márquez',
+    nombre: 'Camila',
+    github: 'CAM-75',
+    linkedin: 'https://www.linkedin.com/in/camila-%C3%A1lvarez-m%C3%A1rquez/',
+    web: 'https://muckrack.com/camila-alvarez-marquez-',
   },
 ]
 

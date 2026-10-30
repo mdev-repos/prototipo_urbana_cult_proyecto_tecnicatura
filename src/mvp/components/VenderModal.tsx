@@ -6,6 +6,7 @@ import type { Evento, MedioPago } from '../types'
 import { Modal } from './Modal'
 import { RepartoVenta } from './RepartoVenta'
 import { TicketCard } from './TicketCard'
+import { t } from '../../i18n'
 
 const MAXIMO_POR_VENTA = 10
 
@@ -58,30 +59,25 @@ export function VenderModal({ evento, onClose }: Props) {
   const entradas = venta ? estado.entradas.filter((t) => t.ventaId === venta.id) : []
 
   return (
-    <Modal titulo={venta ? 'Venta registrada' : 'Vender entradas'} onClose={onClose}>
+    <Modal titulo={venta ? t('Venta registrada') : t('Vender entradas')} onClose={onClose}>
       <div className="checkout__event">
         <p className="checkout__title">{evento.titulo}</p>
         <p className="muted">
-          {artista} · {centro?.nombre}
+          {artista} {t('·')}{" "}{centro?.nombre}
         </p>
         <p className="muted">
-          {formatearFecha(evento.fecha)} · {formatearHora(evento.fecha)} h ·{' '}
-          {formatearPesos(evento.precio)} c/u
-        </p>
+          {formatearFecha(evento.fecha)} {t('·')}{" "}{formatearHora(evento.fecha)} {t('h ·')}{' '}
+          {formatearPesos(evento.precio)} {t('c/u')}</p>
       </div>
 
       {venta ? (
         <div className="checkout__step">
           <p className="notice notice--ok">
-            Venta registrada: {venta.cantidad} {venta.cantidad === 1 ? 'entrada' : 'entradas'} por{' '}
-            {formatearPesos(venta.totalCentavos / 100)} (
-            {venta.medioPago === 'efectivo' ? 'efectivo' : 'medio electrónico'}).
-          </p>
+            {t('Venta registrada:')}{" "}{venta.cantidad} {venta.cantidad === 1 ? t('entrada') : t('entradas')} {t('por')}{' '}
+            {formatearPesos(venta.totalCentavos / 100)} {t('(')}{venta.medioPago === 'efectivo' ? t('efectivo') : t('medio electrónico')}{t(').')}</p>
           {venta.medioPago === 'efectivo' ? (
             <p className="notice">
-              El efectivo queda <strong>en poder del centro</strong> y se suma a la caja del día y a
-              la próxima remesa.
-            </p>
+              {t('El efectivo queda')}{" "}<strong>{t('en poder del centro')}</strong> {t('y se suma a la caja del día y a la próxima remesa.')}</p>
           ) : null}
           <div className="tickets">
             {entradas.map((t) => (
@@ -90,15 +86,14 @@ export function VenderModal({ evento, onClose }: Props) {
           </div>
           <RepartoVenta ventaId={venta.id} />
           <button type="button" className="btn btn--primary" onClick={onClose}>
-            Listo
-          </button>
+            {t('Listo')}</button>
         </div>
       ) : libres === 0 ? (
-        <p className="notice notice--error">Este evento está agotado.</p>
+        <p className="notice notice--error">{t('Este evento está agotado.')}</p>
       ) : (
         <div className="checkout__step">
           <label className="field">
-            <span>Cantidad (máximo {maximo})</span>
+            <span>{t('Cantidad (máximo')}{" "}{maximo}{t(')')}</span>
             <select value={cantidadActual} onChange={(e) => setCantidad(Number(e.target.value))}>
               {Array.from({ length: maximo }, (_, i) => i + 1).map((n) => (
                 <option key={n} value={n}>
@@ -109,7 +104,7 @@ export function VenderModal({ evento, onClose }: Props) {
           </label>
 
           <fieldset className="choice">
-            <legend>Medio de pago</legend>
+            <legend>{t('Medio de pago')}</legend>
             <label className="check">
               <input
                 type="radio"
@@ -118,7 +113,7 @@ export function VenderModal({ evento, onClose }: Props) {
                 disabled={bloqueado}
                 onChange={() => setMedio('efectivo')}
               />
-              <span>Efectivo</span>
+              <span>{t('Efectivo')}</span>
             </label>
             <label className="check">
               <input
@@ -127,22 +122,19 @@ export function VenderModal({ evento, onClose }: Props) {
                 checked={medioActual === 'electronico'}
                 onChange={() => setMedio('electronico')}
               />
-              <span>Medio electrónico (posnet o QR)</span>
+              <span>{t('Medio electrónico (posnet o QR)')}</span>
             </label>
           </fieldset>
           {bloqueado ? (
             <p className="notice notice--error">
-              El centro está bloqueado por no remesar: no puede vender en efectivo hasta
-              regularizarse.
-            </p>
+              {t('El centro está bloqueado por no remesar: no puede vender en efectivo hasta regularizarse.')}</p>
           ) : null}
 
           <p className="checkout__total">
-            Total <strong>{formatearPesos(evento.precio * cantidadActual)}</strong>
+            {t('Total')}{" "}<strong>{formatearPesos(evento.precio * cantidadActual)}</strong>
           </p>
           <button type="button" className="btn btn--primary" onClick={registrar}>
-            Registrar venta
-          </button>
+            {t('Registrar venta')}</button>
         </div>
       )}
     </Modal>

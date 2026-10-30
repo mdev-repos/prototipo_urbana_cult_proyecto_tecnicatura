@@ -1,14 +1,17 @@
 import { useState } from 'react'
+import { Puerta } from '../components/Puerta'
 import { EventCard } from '../components/EventCard'
 import { VenderModal } from '../components/VenderModal'
+import { VenderSinConexion } from '../components/VenderSinConexion'
 import { cierreDelDia, totalesDeCaja, ventasDeCaja } from '../domain/caja'
-import { disponibles } from '../domain/ventas'
+import { bloqueLibre, disponibles } from '../domain/ventas'
 import { formatearCentavos, formatearDia, formatearDiaCorto } from '../format'
 import { useAhora } from '../hooks'
 import { artistas, useMvp } from '../state'
 import type { Evento } from '../types'
+import { t } from '../../i18n'
 
-type Pestana = 'vender' | 'caja'
+type Pestana = 'vender' | 'caja' | 'puerta'
 
 export function Vendedor() {
   const { estado, usuario, despachar } = useMvp()
@@ -37,33 +40,40 @@ export function Vendedor() {
 
   return (
     <div className="page">
-      <p className="eyebrow">Vendedor del centro · {centro?.nombre}</p>
-      <h1>Hola, {usuario.nombre.split(' ')[0]}</h1>
+      <p className="eyebrow">
+        {t('Vendedor del centro ·')} {centro?.nombre}
+      </p>
+      <h1>
+        {t('Hola,')} {usuario.nombre.split(' ')[0]}
+      </h1>
       <p className="lead">
-        Vendé entradas de los eventos de tu centro, en efectivo o con medio electrónico, y cerrá la
-        caja al terminar el día.
+        {t(
+          'Vendé entradas de los eventos de tu centro, en efectivo o con medio electrónico, y cerrá la caja al terminar el día.',
+        )}
       </p>
 
       <dl className="kpis">
         <div>
-          <dt>Efectivo del día</dt>
+          <dt>{t('Efectivo del día')}</dt>
           <dd>{formatearCentavos(totales.efectivo)}</dd>
         </div>
         <div>
-          <dt>Electrónico del día</dt>
+          <dt>{t('Electrónico del día')}</dt>
           <dd>{formatearCentavos(totales.electronico)}</dd>
         </div>
         <div>
-          <dt>Entradas vendidas hoy</dt>
+          <dt>{t('Entradas vendidas hoy')}</dt>
           <dd>{totales.entradas}</dd>
         </div>
         <div>
-          <dt>Caja</dt>
-          <dd className={cierre ? 'kpi--closed' : 'kpi--open'}>{cierre ? 'Cerrada' : 'Abierta'}</dd>
+          <dt>{t('Caja')}</dt>
+          <dd className={cierre ? 'kpi--closed' : 'kpi--open'}>
+            {cierre ? t('Cerrada') : t('Abierta')}
+          </dd>
         </div>
       </dl>
 
-      <div className="tabs" role="tablist" aria-label="Secciones del panel">
+      <div className="tabs" role="tablist" aria-label={t('Secciones del panel')}>
         <button
           type="button"
           role="tab"
@@ -71,7 +81,7 @@ export function Vendedor() {
           className={pestana === 'vender' ? 'tab is-active' : 'tab'}
           onClick={() => setPestana('vender')}
         >
-          Vender
+          {t('Vender')}
         </button>
         <button
           type="button"
@@ -80,21 +90,80 @@ export function Vendedor() {
           className={pestana === 'caja' ? 'tab is-active' : 'tab'}
           onClick={() => setPestana('caja')}
         >
-          Mi caja
+          {t('Mi caja')}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={pestana === 'puerta'}
+          className={pestana === 'puerta' ? 'tab is-active' : 'tab'}
+          onClick={() => setPestana('puerta')}
+        >
+          {t('Puerta', 'Porta')}
         </button>
       </div>
 
       {pestana === 'vender' ? (
         <>
+          {centro?.soloDifusion ? (
+            <p className="notice">
+              {t(
+                'Tu centro está en la etapa de solo difusión. Su cartelera se publica, pero la venta se habilita cuando el centro se suma a su tanda de implementación.',
+                'Seu centro está na etapa de só divulgação. A programação é publicada, mas a venda é habilitada quando o centro entra no seu lote de implantação.',
+              )}
+            </p>
+          ) : null}
+          <div className="conexion">
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={estado.corteInternet}
+                onChange={(e) =>
+                  despachar({
+                    tipo: 'corte-internet',
+                    usuarioId: usuario.id,
+                    activo: e.target.checked,
+                  })
+                }
+              />
+              <span>{t('Simular corte de internet en la boletería')}</span>
+            </label>
+            {estado.corteInternet ? (
+              <p className="notice notice--error">
+                {t(
+                  'Sin conexión. Solo se vende en efectivo con el bloque numerado de entradas reservado de antemano. Ventas pendientes de sincronizar:',
+                )}{' '}
+                <strong>{estado.pendientes.length}</strong>
+              </p>
+            ) : estado.ultimaSync ? (
+              <p className="notice notice--ok">
+                {t(
+                  estado.ultimaSync.ventas === 1
+                    ? 'Volvió la conexión: se sincronizó {v} venta ({e} entradas) y ya está en el libro mayor.'
+                    : 'Volvió la conexión: se sincronizaron {v} ventas ({e} entradas) y ya están en el libro mayor.',
+                  {
+                    v: estado.ultimaSync.ventas,
+                    e: estado.ultimaSync.entradas,
+                  },
+                )}
+              </p>
+            ) : null}
+          </div>
           {cierre ? (
             <p className="notice">
-              La caja de hoy ya está cerrada. Podés volver a vender mañana (usá “+1 día” en la barra
-              de la demo).
+              {t(
+                'La caja de hoy ya está cerrada. Podés volver a vender mañana (usá “+1 día” en la barra de la demo).',
+              )}
             </p>
           ) : null}
           <div className="events" style={{ marginTop: '1.25rem' }}>
             {eventos.map((evento) => {
-              const quedan = disponibles(evento, estado.ventas, estado.reservas, ahora)
+              const pendientesEvento = estado.pendientes
+                .filter((p) => p.eventoId === evento.id)
+                .reduce((suma, p) => suma + p.cantidad, 0)
+              const quedan = estado.corteInternet
+                ? Math.max(0, bloqueLibre(evento, estado.ventas) - pendientesEvento)
+                : disponibles(evento, estado.ventas, estado.reservas, ahora)
               return (
                 <EventCard
                   key={evento.id}
@@ -103,37 +172,46 @@ export function Vendedor() {
                   artista={artistas.find((a) => a.id === evento.artistaId)?.nombre ?? ''}
                   quedan={quedan}
                   accion={{
-                    etiqueta: quedan === 0 ? 'Agotado' : 'Vender',
+                    etiqueta:
+                      quedan === 0
+                        ? estado.corteInternet
+                          ? t('Bloque agotado')
+                          : t('Agotado')
+                        : t('Vender'),
                     onClick: () => setVendiendo(evento),
-                    deshabilitada: quedan === 0 || Boolean(cierre),
+                    deshabilitada: quedan === 0 || Boolean(cierre) || Boolean(centro?.soloDifusion),
                   }}
                 />
               )
             })}
           </div>
         </>
+      ) : pestana === 'puerta' ? (
+        <Puerta centroId={usuario.centroId} />
       ) : (
         <div className="caja">
           <section>
-            <h2 className="caja__title">Ventas de hoy · {formatearDia(estado.hoy)}</h2>
+            <h2 className="caja__title">
+              {t('Ventas de hoy ·')} {formatearDia(estado.hoy)}
+            </h2>
             {ventasHoy.length === 0 ? (
-              <p className="muted">Todavía no registraste ventas hoy.</p>
+              <p className="muted">{t('Todavía no registraste ventas hoy.')}</p>
             ) : (
               <div className="table-wrap">
                 <table className="table">
                   <thead>
                     <tr>
-                      <th>Evento</th>
-                      <th>Medio</th>
-                      <th className="num">Entradas</th>
-                      <th className="num">Total</th>
+                      <th>{t('Evento')}</th>
+                      <th>{t('Medio')}</th>
+                      <th className="num">{t('Entradas')}</th>
+                      <th className="num">{t('Total')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {ventasHoy.map((v) => (
                       <tr key={v.id}>
                         <td>{estado.eventos.find((e) => e.id === v.eventoId)?.titulo}</td>
-                        <td>{v.medioPago === 'efectivo' ? 'Efectivo' : 'Electrónico'}</td>
+                        <td>{v.medioPago === 'efectivo' ? t('Efectivo') : t('Electrónico')}</td>
                         <td className="num">{v.cantidad}</td>
                         <td className="num">{formatearCentavos(v.totalCentavos)}</td>
                       </tr>
@@ -145,7 +223,7 @@ export function Vendedor() {
           </section>
 
           <section className="cierre">
-            <h2 className="caja__title">Cierre de caja</h2>
+            <h2 className="caja__title">{t('Cierre de caja')}</h2>
             {cierre ? (
               <div
                 className={
@@ -153,27 +231,34 @@ export function Vendedor() {
                 }
               >
                 <p>
-                  <strong>Caja cerrada.</strong> Registrado{' '}
-                  {formatearCentavos(cierre.efectivoRegistradoCentavos)} · declarado{' '}
-                  {formatearCentavos(cierre.efectivoDeclaradoCentavos)}.
+                  <strong>{t('Caja cerrada.')}</strong> {t('Registrado')}{' '}
+                  {formatearCentavos(cierre.efectivoRegistradoCentavos)} {t('· declarado')}{' '}
+                  {formatearCentavos(cierre.efectivoDeclaradoCentavos)}
+                  {t('.')}
                 </p>
                 <p>
                   {cierre.diferenciaCentavos === 0
-                    ? 'No hay diferencia: el efectivo coincide con lo vendido.'
-                    : `Diferencia de ${formatearCentavos(cierre.diferenciaCentavos)} (${
-                        cierre.diferenciaCentavos < 0 ? 'faltante' : 'sobrante'
-                      }). Se informa a Soporte de boletería para que la revise.`}
+                    ? t('No hay diferencia: el efectivo coincide con lo vendido.')
+                    : t(
+                        'Diferencia de {monto} ({tipo}). Se informa a Soporte de boletería para que la revise.',
+                        {
+                          monto: formatearCentavos(cierre.diferenciaCentavos),
+                          tipo: cierre.diferenciaCentavos < 0 ? t('faltante') : t('sobrante'),
+                        },
+                      )}
                 </p>
               </div>
             ) : (
               <>
                 <p className="muted">
-                  Contá el efectivo que tenés en la caja y declaralo. El sistema lo compara con el
-                  efectivo registrado en las ventas del día (
-                  <strong>{formatearCentavos(totales.efectivo)}</strong>).
+                  {t(
+                    'Contá el efectivo que tenés en la caja y declaralo. El sistema lo compara con el efectivo registrado en las ventas del día (',
+                  )}
+                  <strong>{formatearCentavos(totales.efectivo)}</strong>
+                  {t(').')}
                 </p>
                 <label className="field">
-                  <span>Efectivo contado (en pesos)</span>
+                  <span>{t('Efectivo contado (en pesos)')}</span>
                   <input
                     inputMode="decimal"
                     value={contado}
@@ -184,10 +269,11 @@ export function Vendedor() {
                 {diferencia !== null ? (
                   <p className={diferencia === 0 ? 'notice notice--ok' : 'notice notice--error'}>
                     {diferencia === 0
-                      ? 'Coincide con lo registrado.'
-                      : `Diferencia: ${formatearCentavos(diferencia)} (${
-                          diferencia < 0 ? 'faltante' : 'sobrante'
-                        }).`}
+                      ? t('Coincide con lo registrado.')
+                      : t('Diferencia: {monto} ({tipo}).', {
+                          monto: formatearCentavos(diferencia),
+                          tipo: diferencia < 0 ? t('faltante') : t('sobrante'),
+                        })}
                   </p>
                 ) : null}
                 <button
@@ -202,7 +288,7 @@ export function Vendedor() {
                     })
                   }
                 >
-                  Cerrar caja del día
+                  {t('Cerrar caja del día')}
                 </button>
               </>
             )}
@@ -210,15 +296,15 @@ export function Vendedor() {
 
           {historial.length > 0 ? (
             <section>
-              <h2 className="caja__title">Cierres anteriores</h2>
+              <h2 className="caja__title">{t('Cierres anteriores')}</h2>
               <div className="table-wrap">
                 <table className="table">
                   <thead>
                     <tr>
-                      <th>Día</th>
-                      <th className="num">Registrado</th>
-                      <th className="num">Declarado</th>
-                      <th className="num">Diferencia</th>
+                      <th>{t('Día')}</th>
+                      <th className="num">{t('Registrado')}</th>
+                      <th className="num">{t('Declarado')}</th>
+                      <th className="num">{t('Diferencia')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -238,7 +324,11 @@ export function Vendedor() {
         </div>
       )}
 
-      {vendiendo ? <VenderModal evento={vendiendo} onClose={() => setVendiendo(null)} /> : null}
+      {vendiendo && estado.corteInternet ? (
+        <VenderSinConexion evento={vendiendo} onClose={() => setVendiendo(null)} />
+      ) : vendiendo ? (
+        <VenderModal evento={vendiendo} onClose={() => setVendiendo(null)} />
+      ) : null}
     </div>
   )
 }

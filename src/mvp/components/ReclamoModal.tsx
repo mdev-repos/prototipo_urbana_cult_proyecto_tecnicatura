@@ -4,6 +4,7 @@ import { formatearPesos } from '../format'
 import { useMvp } from '../state'
 import type { Venta } from '../types'
 import { Modal } from './Modal'
+import { t } from '../../i18n'
 
 const MOTIVOS = [
   'No puedo asistir',
@@ -27,31 +28,30 @@ export function ReclamoModal({ venta, onClose }: Props) {
   if (!usuario || !evento) return null
 
   return (
-    <Modal titulo="Reclamar o pedir una devolución" onClose={onClose}>
+    <Modal titulo={t('Reclamar o pedir una devolución')} onClose={onClose}>
       <p className="checkout__title">{evento.titulo}</p>
       <div className="form">
         <label className="field">
-          <span>¿Cuántas entradas querés devolver?</span>
+          <span>{t('¿Cuántas entradas querés devolver?')}</span>
           <select value={cantidad} onChange={(e) => setCantidad(Number(e.target.value))}>
             {Array.from({ length: maximo }, (_, i) => i + 1).map((n) => (
               <option key={n} value={n}>
-                {n} ({formatearPesos(evento.precio * n)})
+                {n} {t('(')}{formatearPesos(evento.precio * n)}{t(')')}</option>
+            ))}
+          </select>
+        </label>
+        <label className="field">
+          <span>{t('Motivo')}</span>
+          <select value={motivo} onChange={(e) => setMotivo(e.target.value)}>
+            {MOTIVOS.map((m) => (
+              <option key={m} value={m}>
+                {t(m)}
               </option>
             ))}
           </select>
         </label>
-        <label className="field">
-          <span>Motivo</span>
-          <select value={motivo} onChange={(e) => setMotivo(e.target.value)}>
-            {MOTIVOS.map((m) => (
-              <option key={m}>{m}</option>
-            ))}
-          </select>
-        </label>
         <p className="muted checkout__hint">
-          Soporte de boletería revisa tu reclamo. Si se aprueba, te devolvemos el importe y las
-          entradas quedan anuladas.
-        </p>
+          {t('Soporte de boletería revisa tu reclamo. Si se aprueba, te devolvemos el importe y las entradas quedan anuladas.')}</p>
         <button
           type="button"
           className="btn btn--primary"
@@ -66,8 +66,7 @@ export function ReclamoModal({ venta, onClose }: Props) {
             onClose()
           }}
         >
-          Enviar reclamo
-        </button>
+          {t('Enviar reclamo')}</button>
       </div>
     </Modal>
   )

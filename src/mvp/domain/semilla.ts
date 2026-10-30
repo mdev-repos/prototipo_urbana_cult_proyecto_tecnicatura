@@ -1,6 +1,7 @@
 import type { Asiento, Entrada, Evento, Remesa, Venta } from '../types'
+import { correrFecha } from './fechas'
 import { referenciaRemesa } from './remesas'
-import { registrarVenta } from './ventas'
+import { registrarVenta, sumarDias } from './ventas'
 
 /** Entradas ya vendidas de cada evento al comenzar la demo y primer día de venta. */
 const VENDIDAS_INICIALES: Record<string, number> = {
@@ -13,10 +14,19 @@ const VENDIDAS_INICIALES: Record<string, number> = {
   'e-marga2': 9,
   'e-nandues': 14,
   'e-telon-taller': 8,
+  'e-ladrillo-hoy': 31,
+  'e-ojo-estreno': 58,
 }
 
 const TAMANOS = [2, 1, 3, 2, 4, 1, 2]
-const DIAS = ['2026-10-27', '2026-10-28', '2026-10-29', '2026-10-30', '2026-10-31', '2026-11-01']
+const DIAS_BASE = [
+  '2026-10-27',
+  '2026-10-28',
+  '2026-10-29',
+  '2026-10-30',
+  '2026-10-31',
+  '2026-11-01',
+]
 
 export type VentasSemilla = {
   seq: number
@@ -31,7 +41,14 @@ export type VentasSemilla = {
  * arranque con cartelera con movimiento y libro mayor con saldos. Una de cada
  * cuatro es de boletería en efectivo (queda "en poder del centro").
  */
-export function ventasIniciales(eventos: Evento[], comisionPct: number): VentasSemilla {
+export function ventasIniciales(
+  eventos: Evento[],
+  comisionPct: number,
+  desfase: number,
+): VentasSemilla {
+  const DIAS = DIAS_BASE.map((d) => correrFecha(d, desfase))
+  const ayer = correrFecha('2026-11-01', desfase)
+  const hoy = correrFecha('2026-11-02', desfase)
   let seq = 0
   const out: VentasSemilla = { seq: 0, ventas: [], entradas: [], asientos: [], remesas: [] }
 
@@ -50,7 +67,11 @@ export function ventasIniciales(eventos: Evento[], comisionPct: number): VentasS
         canal: enBoleteria ? 'boleteria' : 'web',
         medioPago: enBoleteria ? 'efectivo' : 'electronico',
         cantidad,
-        fecha: DIAS[i % DIAS.length],
+        // Las ventas previas siempre son anteriores al día del evento.
+        fecha:
+          DIAS[i % DIAS.length] < evento.fecha.slice(0, 10)
+            ? DIAS[i % DIAS.length]
+            : sumarDias(evento.fecha, -1),
       })
       seq = r.seq
       out.ventas.push(r.venta)
@@ -70,7 +91,7 @@ export function ventasIniciales(eventos: Evento[], comisionPct: number): VentasS
         (v) =>
           v.eventoId === evento.id &&
           v.medioPago === 'efectivo' &&
-          v.fecha < (evento.centroId === 'c-sur' ? '2026-11-01' : '2026-11-02'),
+          v.fecha < (evento.centroId === 'c-sur' ? ayer : hoy),
       )
       .reduce((suma, v) => suma + v.totalCentavos, 0)
     if (efectivo === 0) continue
@@ -79,7 +100,7 @@ export function ventasIniciales(eventos: Evento[], comisionPct: number): VentasS
       id: `m-${seq}`,
       centroId: evento.centroId,
       eventoId: evento.id,
-      fecha: '2026-11-01',
+      fecha: ayer,
       tipo: 'bruta',
       efectivoCubiertoCentavos: efectivo,
       retenidoCentroCentavos: 0,

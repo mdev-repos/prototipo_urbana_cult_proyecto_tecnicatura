@@ -3,6 +3,7 @@ import { metaRol } from '../roles'
 import { artistas, useMvp } from '../state'
 import type { AreaCoordinacion, Rol, Usuario } from '../types'
 import { Modal } from './Modal'
+import { t } from '../../i18n'
 
 const ROLES = Object.keys(metaRol) as Rol[]
 
@@ -34,10 +35,10 @@ export function UsuarioForm({ usuario, onClose }: Props) {
   function enviar(e: FormEvent) {
     e.preventDefault()
     const correo = email.trim().toLowerCase()
-    if (!nombre.trim()) return setError('Poné el nombre de la persona.')
-    if (!/^\S+@\S+\.\S+$/.test(correo)) return setError('Poné un email válido.')
+    if (!nombre.trim()) return setError(t('Poné el nombre de la persona.'))
+    if (!/^\S+@\S+\.\S+$/.test(correo)) return setError(t('Poné un email válido.'))
     if (estado.usuarios.some((u) => u.email.toLowerCase() === correo && u.id !== usuario?.id)) {
-      return setError('El usuario ya existe con ese email.')
+      return setError(t('El usuario ya existe con ese email.'))
     }
     despachar({
       tipo: 'admin-guardar-usuario',
@@ -56,35 +57,34 @@ export function UsuarioForm({ usuario, onClose }: Props) {
   }
 
   return (
-    <Modal titulo={usuario ? 'Modificar usuario' : 'Nuevo usuario'} onClose={onClose}>
+    <Modal titulo={usuario ? t('Modificar usuario') : t('Nuevo usuario')} onClose={onClose}>
       <form className="form" onSubmit={enviar} noValidate>
         <label className="field">
-          <span>Nombre</span>
+          <span>{t('Nombre')}</span>
           <input value={nombre} onChange={(e) => setNombre(e.target.value)} />
         </label>
         <label className="field">
-          <span>Email</span>
+          <span>{t('Email')}</span>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         </label>
         <label className="field">
-          <span>Rol</span>
+          <span>{t('Rol')}</span>
           <select value={rol} disabled={esUnoMismo} onChange={(e) => setRol(e.target.value as Rol)}>
             {ROLES.map((r) => (
               <option key={r} value={r}>
-                {metaRol[r].etiqueta}
+                {t(metaRol[r].etiqueta)}
               </option>
             ))}
           </select>
         </label>
         {esUnoMismo ? (
           <p className="muted checkout__hint">
-            No podés cambiar tu propio rol: te quedarías sin acceso.
-          </p>
+            {t('No podés cambiar tu propio rol: te quedarías sin acceso.')}</p>
         ) : null}
 
         {rol === 'centro' || rol === 'vendedor' ? (
           <label className="field">
-            <span>Centro (los permisos se limitan a este centro)</span>
+            <span>{t('Centro (los permisos se limitan a este centro)')}</span>
             <select value={centroId} onChange={(e) => setCentroId(e.target.value)}>
               {estado.centros.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -96,7 +96,7 @@ export function UsuarioForm({ usuario, onClose }: Props) {
         ) : null}
         {rol === 'artista' ? (
           <label className="field">
-            <span>Artista</span>
+            <span>{t('Artista')}</span>
             <select value={artistaId} onChange={(e) => setArtistaId(e.target.value)}>
               {artistas.map((a) => (
                 <option key={a.id} value={a.id}>
@@ -108,11 +108,11 @@ export function UsuarioForm({ usuario, onClose }: Props) {
         ) : null}
         {rol === 'coordinacion' ? (
           <label className="field">
-            <span>Área de la Coordinación Central</span>
+            <span>{t('Área de la Coordinación Central')}</span>
             <select value={area} onChange={(e) => setArea(e.target.value as AreaCoordinacion)}>
               {(Object.keys(AREAS) as AreaCoordinacion[]).map((a) => (
                 <option key={a} value={a}>
-                  {AREAS[a]}
+                  {t(AREAS[a])}
                 </option>
               ))}
             </select>
@@ -121,9 +121,7 @@ export function UsuarioForm({ usuario, onClose }: Props) {
 
         {rol === 'admin' ? (
           <p className="notice">
-            El Admin de plataforma gestiona usuarios, roles y configuración técnica, pero no puede
-            aprobar ni ejecutar pagos.
-          </p>
+            {t('El Admin de plataforma gestiona usuarios, roles y configuración técnica, pero no puede aprobar ni ejecutar pagos.')}</p>
         ) : null}
         {error ? (
           <p className="form__error" role="alert">
@@ -131,7 +129,7 @@ export function UsuarioForm({ usuario, onClose }: Props) {
           </p>
         ) : null}
         <button type="submit" className="btn btn--primary">
-          {usuario ? 'Guardar cambios' : 'Crear usuario'}
+          {usuario ? t('Guardar cambios') : t('Crear usuario')}
         </button>
       </form>
     </Modal>

@@ -36,11 +36,12 @@ export function Equipo() {
       <h1>Quiénes hicimos Urbana Cult</h1>
 
       <p className="lead">
-        Somos el Equipo 23 de la Comisión A de la Tecnicatura Superior en Desarrollo de Software a
-        Distancia del IFTS N° 29. Este trabajo cuatrimestral de Ingeniería de Software analiza y
-        diseña Urbana Cult, una red de publicación, reserva y boletería para centros culturales
-        autogestionados, y este sitio reúne la documentación y un prototipo que muestra cómo
-        funcionaría.
+        Somos un equipo de desarrollo que ofrece a Urbana Cult, una red de 25 centros culturales
+        independientes, una plataforma de gestión como servicio. La desarrollamos, la alojamos y la
+        mantenemos, y resuelve en un solo lugar la cartelera, la venta de entradas con reparto del
+        cobro, el efectivo, la liquidación y el alquiler de salas. Somos el Equipo 23 de la Comisión
+        A de la Tecnicatura Superior en Desarrollo de Software a Distancia del IFTS N° 29, y este
+        sitio reúne el resumen de la propuesta y un prototipo que muestra cómo funcionaría.
       </p>
 
       <ul className="members">

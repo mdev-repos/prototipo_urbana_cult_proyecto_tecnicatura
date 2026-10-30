@@ -4,5 +4,5 @@
   { "id": "c-patios", "nombre": "Casa Tres Patios", "barrio": "San Telmo", "estado": "habilitado" },
   { "id": "c-subsuelo", "nombre": "Sala Subsuelo", "barrio": "Villa Crespo", "estado": "habilitado" },
   { "id": "c-calesita", "nombre": "Centro Cultural La Calesita", "barrio": "Caballito", "estado": "habilitado" },
-  { "id": "c-norte", "nombre": "Club de Cultura Nuevo Norte", "barrio": "Colegiales", "estado": "habilitado" }
+  { "id": "c-norte", "nombre": "Club de Cultura Nuevo Norte", "barrio": "Colegiales", "estado": "habilitado", "soloDifusion": true }
 ]
